@@ -2686,6 +2686,7 @@ GLFWAPI void glfwWindowHintString(int hint, const char* value);
  *
  *  @since Added in version 3.0.  Replaces `glfwOpenWindow`.
  *
+
  *  @ingroup window
  */
 GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height, const char* title, GLFWmonitor* monitor, GLFWwindow* share);
