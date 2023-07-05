@@ -4,11 +4,12 @@
 #include <optional>
 #include "ValidationLayersManager.h"
 #include "Window/Window.h"
-#include "Application.h"
 
 namespace vkEngine
 {
 
+	class Engine;
+	class Application;
 	using QueueFamilyIndex = uint32_t;
 	struct QueueFamilyIndices
 	{
@@ -47,7 +48,7 @@ namespace vkEngine
 	class VulkanContext
 	{
 	public:
-		VulkanContext(const Shared<Application>& app, const std::vector<const char*>& deviceExtensions);
+		VulkanContext(const Engine* engine, const std::vector<const char*>& deviceExtensions);
 		~VulkanContext();
 
 		VkPhysicalDevice getPhysicalDevice() const { return m_PhysicalDevice; };
@@ -61,8 +62,8 @@ namespace vkEngine
 		void cleanup();
 		void initialize();
 	private:
+		const Engine* m_Engine = nullptr;
 		VkPhysicalDevice m_PhysicalDevice{ VK_NULL_HANDLE };
-		const Shared<Application> m_App;
 		VkDevice m_Device{ VK_NULL_HANDLE };
 
 		QueueFamilyIndices m_QueueIndices;

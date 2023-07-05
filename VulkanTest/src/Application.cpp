@@ -1,22 +1,16 @@
 #include "Application.h"
 
-
 namespace vkEngine
 {
-	Application::Application(bool enableLayers, const std::vector<const char*>& validationLayers, uint32_t width, uint32_t height, const std::string& appName)
+	const std::vector<const char*> validationLayers =
+	{
+		"VK_LAYER_KHRONOS_validation"
+	};
+
+	Application::Application(bool enableLayers, uint32_t width, uint32_t height, const std::string& appName)
 		: m_EnableValidationLayers(enableLayers), m_AppName(appName)
 	{
-		if (m_EnableValidationLayers && validationLayers.size() > 0)
-		{
-			m_ValidationLayersManager = CreateScoped<ValidationLayersManager>(validationLayers);
-		}
-		else
-			ENGINE_INFO("Validation layers do not work");
-		
 		m_Window = CreateShared<Window>(width, height, m_AppName);
-		initInstance();
-		m_ValidationLayersManager->setupDebugMessanger(m_Instance);
-		m_Window->createSurface(m_Instance, m_Surface);
 	}
 
 	Application::~Application()
@@ -24,10 +18,27 @@ namespace vkEngine
 		cleanup();
 	}
 
+	void Application::run()
+	{
+		prepareEngine();
+		m_Engine->run();
+	}
+	void Application::prepareEngine()
+	{
+		if (m_EnableValidationLayers && validationLayers.size() > 0)
+		{
+			m_ValidationLayersManager = CreateScoped<ValidationLayersManager>(validationLayers);
+		}
+		else
+			ENGINE_INFO("Validation layers do not work");
+
+		initInstance();
+		m_ValidationLayersManager->setupDebugMessanger(m_Instance);
+		m_Window->createSurface(m_Instance, m_Surface);
+		m_Engine = CreateShared<Engine>(this);
+	}
 	void Application::initInstance()
 	{
-
-
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "VulkanDemo";
@@ -133,8 +144,11 @@ namespace vkEngine
 	}
 	void Application::cleanup()
 	{
+		if (m_EnableValidationLayers && validationLayers.size() > 0)
+			m_ValidationLayersManager->destroyDebugMessenger(m_Instance);
+
 		vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-		m_ValidationLayersManager->destroyDebugMessenger(m_Instance);
 		vkDestroyInstance(m_Instance, nullptr);
+		m_Window.reset();
 	}
 }

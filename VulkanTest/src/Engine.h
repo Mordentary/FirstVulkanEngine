@@ -1,64 +1,20 @@
 #pragma once
 
 #include <optional>
-#include <glm/glm.hpp>
 #include <array>
+#include <glm/glm.hpp>
+
 #include "TimeHelper.h"
 #include "VulkanContext.h"
 #include "Camera/Camera.h"
 
-#ifdef NDEBUG
-const bool enableValidationLayers = false;
-#else
-const bool enableValidationLayers = true;
-#endif
+
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 
 namespace vkEngine
 {
-	//using QueueFamilyIndex = uint32_t;
-	//struct QueueFamilyIndices
-	//{
-	//public:
-	//	uint32_t uniqueQueueFamilyCount()
-	//	{
-	//		std::unordered_set<QueueFamilyIndex> uniqueFamilies;
-	//		if (graphicsFamily.has_value())
-	//			uniqueFamilies.insert(graphicsFamily.value());
-	//		if (presentFamily.has_value())
-	//			uniqueFamilies.insert(presentFamily.value());
-
-	//		return static_cast<uint32_t>(uniqueFamilies.size());
-	//	}
-
-	//	std::unordered_set<QueueFamilyIndex> uniqueQueueFamilies()
-	//	{
-	//		std::unordered_set<QueueFamilyIndex> uniqueFamilies;
-	//		if (graphicsFamily.has_value())
-	//			uniqueFamilies.insert(graphicsFamily.value());
-	//		if (presentFamily.has_value())
-	//			uniqueFamilies.insert(presentFamily.value());
-
-	//		return uniqueFamilies;
-	//	}
-
-	//	bool isComplete()
-	//	{
-	//		return graphicsFamily.has_value() && presentFamily.has_value();
-	//	}
-	//public:
-	//	std::optional<QueueFamilyIndex> graphicsFamily;
-	//	std::optional<QueueFamilyIndex> presentFamily;
-	//};
-
-	////struct SwapChainSupportDetails
-	////{
-	////	VkSurfaceCapabilitiesKHR capabilities{};
-	////	std::vector<VkSurfaceFormatKHR> formats{};
-	////	std::vector<VkPresentModeKHR> presentModes{};
-	////};
 	struct Vertex
 	{
 		glm::vec2 position;
@@ -110,10 +66,15 @@ namespace vkEngine
 	};
 
 
+	class Application;
 	class Engine
 	{
 	public:
 		void run();
+		
+		const Application* getApp() const { return m_App; };
+		Engine(const Application* app) : m_App(app){};
+	
 	private:
 		void update(Timestep deltaTime);
 		void render();
@@ -121,8 +82,8 @@ namespace vkEngine
 		void init();
 
 	private:
+		const Application* m_App;
 		Shared<VulkanContext> m_Context;
-		Shared<Application> m_App;
 		Shared<Camera> m_Camera;
 
 	private:

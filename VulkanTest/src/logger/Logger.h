@@ -3,8 +3,8 @@
 #include <cstdio>
 #include <cstdint>
 #include <cassert>
-#include "Core.h"
 #include <inttypes.h>
+#include "Core.h"
 
 namespace vkEngine
 {

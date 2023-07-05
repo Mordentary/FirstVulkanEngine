@@ -14,6 +14,7 @@
 #include<glm/gtx/rotate_vector.hpp>
 #include<glm/gtx/vector_angle.hpp>
 #include "TimeHelper.h"
+#include "Application.h"
 
 namespace vkEngine
 {
@@ -21,10 +22,6 @@ namespace vkEngine
 	const std::vector<const char*> deviceExtensions =
 	{
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
-	};
-	const std::vector<const char*> validationLayers =
-	{
-		"VK_LAYER_KHRONOS_validation"
 	};
 
 	const int WINDOW_STARTUP_HEIGHT = 1000, WINDOW_STARTUP_WIDTH = 1000;
@@ -35,7 +32,7 @@ namespace vkEngine
 		init();
 
 		Timer timer("DeltaTimer");
-		Timestep deltaTime(0.16);
+		Timestep deltaTime(0.16f);
 
 		while (!m_App->getWindow()->shouldClose())
 		{
@@ -56,13 +53,8 @@ namespace vkEngine
 
 	void Engine::init()
 	{
-		m_App = DEBUG_BUILD_CONFIGURATION ?
-			CreateShared<Application>(true, validationLayers, WINDOW_STARTUP_WIDTH, WINDOW_STARTUP_HEIGHT, APP_NAME)
-			:
-			CreateShared<Application>(false, validationLayers, WINDOW_STARTUP_WIDTH, WINDOW_STARTUP_HEIGHT, APP_NAME);
 
-		m_Context = CreateShared<VulkanContext>(m_App, deviceExtensions);
-
+		m_Context = CreateShared<VulkanContext>(this, deviceExtensions);
 		m_Camera = CreateShared<Camera>(glm::vec3{ 1.f }, glm::vec3{ 0.f }, m_App->getWindow());
 		
 		initVulkan();
@@ -190,7 +182,6 @@ namespace vkEngine
 		vkDestroyCommandPool(device, m_CommandPool, nullptr);
 
 		m_Context.reset();
-		m_App.reset();
 	}
 
 
@@ -611,14 +602,12 @@ namespace vkEngine
 	{
 		UniformBufferObject ubo{};
 
-
 		static glm::vec3 position = glm::vec3(2.0f);
 
 		ubo.modelMat = glm::rotate(glm::mat4(1.0f), deltaTime * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.viewMat = m_Camera->GetViewMatrix();
 		ubo.projMat = m_Camera->GetProjectionMatrix();
 		ubo.projMat[1][1] *= -1;
-
 
 		memcpy(m_UniformBuffersMapped[currentFrame], &ubo, sizeof(ubo));
 	}
@@ -699,7 +688,7 @@ namespace vkEngine
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL; // How fragments are generated
 		rasterizer.lineWidth = 1.0f;
 		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT; // Culling side
-		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		rasterizer.depthBiasEnable = VK_FALSE; // Bias for shadow mapping
 
 		VkPipelineMultisampleStateCreateInfo multisampling{};

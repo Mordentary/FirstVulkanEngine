@@ -21,7 +21,8 @@ namespace vkEngine
 
 		m_ViewMatrix = glm::lookAt(position, position + m_CameraSpaceAxisZ, m_CameraSpaceAxisY);
 		auto [width, height] = window->getWindowSize();
-
+		m_AspectRatio = static_cast<float>(width / height);
+			
 		m_ProjectionMatrix = glm::perspective(FOV, m_AspectRatio, nearFar.x, nearFar.y);
 	}
 

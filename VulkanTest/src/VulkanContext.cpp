@@ -1,14 +1,11 @@
 #include "VulkanContext.h"
 #include <Logger/Logger.h>
-
-
+#include "Application.h"
 
 namespace vkEngine
 {
-
-
-	VulkanContext::VulkanContext(const Shared<Application>& app, const std::vector<const char*>& deviceExtensions)
-		: m_DeviceExtensions(deviceExtensions), m_App(app)
+	VulkanContext::VulkanContext(const Engine* engine, const std::vector<const char*>& deviceExtensions)
+		: m_DeviceExtensions(deviceExtensions), m_Engine(engine)
 	{
 		initialize();
 	}
@@ -43,8 +40,7 @@ namespace vkEngine
 
 	void VulkanContext::pickPhysicalDevice()
 	{
-
-		VkInstance instance = m_App->getInstance();
+		VkInstance instance = m_Engine->getApp()->getInstance();
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 		ENGINE_ASSERT(deviceCount, "Failed to find GPUs with Vulkan support");
@@ -69,11 +65,9 @@ namespace vkEngine
 		}
 
 		ENGINE_ASSERT(m_PhysicalDevice != VK_NULL_HANDLE, "Failed to find suitable GPU");
-
 	}
 	void VulkanContext::initLogicalDevice()
 	{
-
 		QueueFamilyIndices indices = findQueueFamilies(m_PhysicalDevice);
 
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -99,12 +93,11 @@ namespace vkEngine
 		deviceInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		deviceInfo.pEnabledFeatures = &deviceFeatures;
 
-
 		//Specify validation layers for older version of vulkan where is still the case (Previosly vulkan differ these two settings)
 		std::vector<const char*> validationLayers{};
-		if (m_App->isValidationLayersEnabled())
+		if (m_Engine->getApp()->isValidationLayersEnabled())
 		{
-			validationLayers = m_App->getActivatedValidationLayers();
+			validationLayers = m_Engine->getApp()->getActivatedValidationLayers();
 			deviceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			deviceInfo.ppEnabledLayerNames = validationLayers.data();
 		}
@@ -116,8 +109,6 @@ namespace vkEngine
 		deviceInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
 
 		ENGINE_ASSERT(vkCreateDevice(m_PhysicalDevice, &deviceInfo, nullptr, &m_Device) == VK_SUCCESS, "Device creation failed");
-
-
 	}
 	bool VulkanContext::isDeviceSuitable(VkPhysicalDevice device)
 	{
@@ -133,7 +124,7 @@ namespace vkEngine
 
 		if (extensSupported)
 		{
-			SwapChainSupportDetails swapChainSupport = m_App->querySwapChainSupport(device);
+			SwapChainSupportDetails swapChainSupport = m_Engine->getApp()->querySwapChainSupport(device);
 			swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 		}
 
@@ -180,7 +171,7 @@ namespace vkEngine
 			}
 
 			VkBool32 presentSupport = false;
-			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_App->getSurface(), &presentSupport);
+			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_Engine->getApp()->getSurface(), &presentSupport);
 			if (presentSupport)
 			{
 				indices.presentFamily = i;
@@ -195,5 +186,4 @@ namespace vkEngine
 		}
 		return indices;
 	}
-
 }
