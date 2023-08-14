@@ -1,8 +1,8 @@
 #pragma once
 #include "../TimeHelper.h"
 #include "../Window/Window.h"
-#include <glm/glm.hpp>
 
+#include <glm/glm.hpp>
 
 namespace vkEngine
 {
@@ -35,7 +35,7 @@ namespace vkEngine
 		float m_CameraSensivity = 50.0f;
 		float m_CameraTranslationSpeed = 0.2f;
 		float m_AspectRatio = 1.6f;
-		
+
 		glm::vec3 m_Position{};
 		glm::vec3& m_CameraForward = m_CameraSpaceAxisZ;
 

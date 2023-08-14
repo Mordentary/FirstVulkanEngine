@@ -3,12 +3,13 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
+
 namespace vkEngine
 {
 
 	Camera::Camera(const glm::vec3& position, const glm::vec3& cameraTarget, const Shared<Window> window, float FOV, const glm::vec2& nearFar)
 		: m_NearFar(nearFar), m_Window(window), m_Position(position), m_FOVdeg(FOV)
-	{
+		{
 		if (position == cameraTarget)
 		{
 			ENGINE_ASSERT(false, "Camera target and position are equal!");
@@ -21,7 +22,7 @@ namespace vkEngine
 
 		m_ViewMatrix = glm::lookAt(position, position + m_CameraSpaceAxisZ, m_CameraSpaceAxisY);
 		auto [width, height] = window->getWindowSize();
-		m_AspectRatio = static_cast<float>(width / height);
+		m_AspectRatio = static_cast<float>(width/height);
 			
 		m_ProjectionMatrix = glm::perspective(FOV, m_AspectRatio, nearFar.x, nearFar.y);
 	}

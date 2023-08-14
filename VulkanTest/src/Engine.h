@@ -10,15 +10,16 @@
 
 
 
-const int MAX_FRAMES_IN_FLIGHT = 2;
+const int MAX_FRAMES_IN_FLIGHT = 3;
 
 
 namespace vkEngine
 {
 	struct Vertex
 	{
-		glm::vec2 position;
+		glm::vec3 position;
 		glm::vec3 color;
+		glm::vec2 textureCoord;
 		static VkVertexInputBindingDescription getBindingDescription()
 		{
 			VkVertexInputBindingDescription bindingDescription{};
@@ -28,13 +29,13 @@ namespace vkEngine
 
 			return bindingDescription;
 		}
-		static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+		static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions()
 		{
-			std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+			std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 
 			attributeDescriptions[0].binding = 0;
 			attributeDescriptions[0].location = 0;
-			attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributeDescriptions[0].offset = offsetof(Vertex, position);
 
 			attributeDescriptions[1].binding = 0;
@@ -42,20 +43,25 @@ namespace vkEngine
 			attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributeDescriptions[1].offset = offsetof(Vertex, color);
 
+			attributeDescriptions[2].binding = 0;
+			attributeDescriptions[2].location = 2;
+			attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[2].offset = offsetof(Vertex, textureCoord);
+
 			return attributeDescriptions;
 		}
 	};
 
-	const std::vector<Vertex> vertices =
-	{
-		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-		{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+	const std::vector<Vertex> vertices = {
+		{{-0.5f, -0.5f, 0.f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+		{{0.5f, -0.5f, 0.f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+		{{0.5f, 0.5f, 0.f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+		{{-0.5f, 0.5f, 0.f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 	};
+
 	const std::vector<uint16_t> indices =
 	{
-		0, 1, 2, 2, 3, 0
+			0, 1, 2, 2, 3, 0
 	};
 
 	struct UniformBufferObject
@@ -71,10 +77,10 @@ namespace vkEngine
 	{
 	public:
 		void run();
-		
+
 		const Application* getApp() const { return m_App; };
-		Engine(const Application* app) : m_App(app){};
-	
+		Engine(const Application* app) : m_App(app) {};
+
 	private:
 		void update(Timestep deltaTime);
 		void render();
@@ -92,7 +98,7 @@ namespace vkEngine
 		void recreateSwapchain();
 		void cleanupSwapChain();
 
-		void initImageViews();
+		void initSwapchainImageViews();
 
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& abailableModes);
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
@@ -112,11 +118,25 @@ namespace vkEngine
 		void initCommandPool();
 		void initCommandBuffer();
 
+		VkCommandBuffer beginSingleTimeCommands();
+		void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+		void initImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+		VkImageView createImageView(VkImage image, VkFormat format);
+		void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+
 		void initBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
 		void initVertexBuffer();
 		void initIndexBuffer();
 		void initUniformBuffer();
+		void initTextureImage();
+		void initTextureImageView();
+		void initTextureSampler();
+
+
 		void updateUniformBuffer(uint32_t currentFrame, Timestep deltaTime);
 
 		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -149,6 +169,12 @@ namespace vkEngine
 
 		VkBuffer m_IndexBuffer;
 		VkDeviceMemory m_IndexBufferMemory;
+
+		VkSampler m_TextureSampler;
+		VkImageView m_TextureView;
+		VkImage m_Texture;
+		VkDeviceMemory m_TextureMemory;
+
 
 		std::vector<VkBuffer>  m_UniformBuffers{};
 		std::vector<VkDeviceMemory> m_UniformBuffersMemory{};

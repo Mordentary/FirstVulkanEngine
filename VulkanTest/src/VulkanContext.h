@@ -56,7 +56,9 @@ namespace vkEngine
 		VkQueue getGraphicsQueue() const { return m_GraphicsQueue; };
 		VkQueue getPresentQueue() const { return m_PresentQueue; };
 		QueueFamilyIndices getQueueIndices() const { return m_QueueIndices; }
-	
+		VkPhysicalDeviceFeatures getDeviceEnabledFeatures() const { return m_EnabledFeatures; }
+
+
 	private:
 		void queryQueues();
 		void cleanup();
@@ -64,6 +66,7 @@ namespace vkEngine
 	private:
 		const Engine* m_Engine = nullptr;
 		VkPhysicalDevice m_PhysicalDevice{ VK_NULL_HANDLE };
+		VkPhysicalDeviceFeatures m_EnabledFeatures{};
 		VkDevice m_Device{ VK_NULL_HANDLE };
 
 		QueueFamilyIndices m_QueueIndices;
@@ -76,6 +79,7 @@ namespace vkEngine
 		void pickPhysicalDevice();
 		void initLogicalDevice();
 
+		VkPhysicalDeviceFeatures getSupportedFeatures();
 		bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 		bool isDeviceSuitable(VkPhysicalDevice device);
 		QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);

@@ -18,6 +18,7 @@ namespace vkEngine
 	void VulkanContext::initialize()
 	{
 		pickPhysicalDevice();
+		m_EnabledFeatures = getSupportedFeatures();
 		initLogicalDevice();
 		queryQueues();
 	}
@@ -85,13 +86,14 @@ namespace vkEngine
 			queueCreateInfos.push_back(queueCreateInfo);
 		}
 
-		VkPhysicalDeviceFeatures deviceFeatures{};
+		VkPhysicalDeviceFeatures deviceFeatures = getSupportedFeatures();
+
 
 		VkDeviceCreateInfo deviceInfo{};
 		deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		deviceInfo.pQueueCreateInfos = queueCreateInfos.data();
 		deviceInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-		deviceInfo.pEnabledFeatures = &deviceFeatures;
+		deviceInfo.pEnabledFeatures = &m_EnabledFeatures;
 
 		//Specify validation layers for older version of vulkan where is still the case (Previosly vulkan differ these two settings)
 		std::vector<const char*> validationLayers{};
@@ -134,6 +136,18 @@ namespace vkEngine
 			extensSupported
 			&&
 			swapChainAdequate;
+	}
+	VkPhysicalDeviceFeatures VulkanContext::getSupportedFeatures()
+	{
+		VkPhysicalDeviceProperties deviceProperties;
+		VkPhysicalDeviceFeatures deviceFeatures;
+		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &deviceProperties);
+		vkGetPhysicalDeviceFeatures(m_PhysicalDevice, &deviceFeatures);
+
+		if (deviceProperties.limits.maxSamplerAnisotropy > 1)
+			deviceFeatures.samplerAnisotropy = VK_TRUE;
+
+		return deviceFeatures;
 	}
 	bool VulkanContext::checkDeviceExtensionSupport(VkPhysicalDevice device)
 	{
