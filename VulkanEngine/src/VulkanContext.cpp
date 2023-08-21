@@ -1,6 +1,7 @@
 #include "VulkanContext.h"
-#include <Logger/Logger.h>
+#include "Logger/Logger.h"
 #include "Application.h"
+#include "QueueHandler.h"
 
 namespace vkEngine
 {
@@ -20,22 +21,99 @@ namespace vkEngine
 		pickPhysicalDevice();
 		m_EnabledFeatures = getSupportedFeatures();
 		initLogicalDevice();
-		queryQueues();
+		initQueueHandler();
+		initSwapchain();
 	}
 
-	void VulkanContext::queryQueues()
+	void VulkanContext::initSwapchain()
 	{
-		m_QueueIndices = findQueueFamilies(m_PhysicalDevice);
-
-		QueueFamilyIndex graphicsFamily = m_QueueIndices.graphicsFamily.value();
-		QueueFamilyIndex presentFamily = m_QueueIndices.presentFamily.value();
-
-		vkGetDeviceQueue(m_Device, graphicsFamily, 0, &m_GraphicsQueue);
-		vkGetDeviceQueue(m_Device, presentFamily, 0, &m_PresentQueue);
+		m_Swapchain = CreateScoped<Swapchain>
+			(
+				m_Engine->getApp()->getWindow(),
+				m_Engine->getApp()->getSurface(),
+				*this,
+				m_Engine->s_MaxFramesInFlight
+			);
 	}
+
+
+	void VulkanContext::initQueueHandler()
+	{
+		m_QueueHandler = CreateScoped<QueueHandler>(*this);
+	}
+
+	SwapChainSupportDetails VulkanContext::querySwapChainSupport(VkPhysicalDevice physicalDevice) const
+	{
+		VkSurfaceKHR surface = m_Engine->getApp()->getSurface();
+
+
+		SwapChainSupportDetails details;
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &details.capabilities);
+
+		uint32_t formatCount;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
+		if (formatCount != 0)
+		{
+			details.formats.resize(formatCount);
+			vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, details.formats.data());
+		}
+
+		uint32_t presentMode;
+		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentMode, nullptr);
+		if (presentMode != 0)
+		{
+			details.presentModes.resize(presentMode);
+			vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentMode, details.presentModes.data());
+		}
+
+		return details;
+	}
+
+	VkBool32 VulkanContext::isQueueSupportPresentation(VkPhysicalDevice device, QueueFamilyIndex index) const
+	{
+		VkBool32 presentSupport;
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, index, m_Engine->getApp()->getSurface(), &presentSupport);
+		return presentSupport;
+	}
+
+	VkFormat VulkanContext::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+	{
+		for (VkFormat format : candidates)
+		{
+			VkFormatProperties props;
+			vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, format, &props);
+			if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+				return format;
+			}
+			else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+				return format;
+			}
+			else
+				ENGINE_ASSERT(false, "No suitable formats was found")
+
+		}
+	}
+
+	VkFormat VulkanContext::findDepthFormat()
+	{
+		return findSupportedFormat(
+			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+		);
+	}
+
+	bool VulkanContext::hasStencilComponent(VkFormat format)
+	{
+		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+	}
+
+
+
 
 	void VulkanContext::cleanup()
 	{
+		m_Swapchain->cleanupSwapchain();
 		vkDestroyDevice(m_Device, nullptr);
 	}
 
@@ -69,7 +147,7 @@ namespace vkEngine
 	}
 	void VulkanContext::initLogicalDevice()
 	{
-		QueueFamilyIndices indices = findQueueFamilies(m_PhysicalDevice);
+		QueueFamilyIndices indices = getAvaibleQueueFamilies();
 
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 		queueCreateInfos.reserve(indices.uniqueQueueFamilyCount());
@@ -119,14 +197,13 @@ namespace vkEngine
 		vkGetPhysicalDeviceProperties(device, &deviceProperties);
 		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-		QueueFamilyIndices indices = findQueueFamilies(device);
-
+		QueueFamilyIndices indices = findQueueFamilies(device, VK_QUEUE_GRAPHICS_BIT);
 		bool extensSupported = checkDeviceExtensionSupport(device);
 		bool swapChainAdequate = false;
 
 		if (extensSupported)
 		{
-			SwapChainSupportDetails swapChainSupport = m_Engine->getApp()->querySwapChainSupport(device);
+			SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
 			swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 		}
 
@@ -137,7 +214,49 @@ namespace vkEngine
 			&&
 			swapChainAdequate;
 	}
-	VkPhysicalDeviceFeatures VulkanContext::getSupportedFeatures()
+
+	QueueFamilyIndices VulkanContext::findQueueFamilies(VkPhysicalDevice device, VkQueueFlagBits flags) const
+	{
+		QueueFamilyIndices indices;
+
+		uint32_t queueFamilyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+		int i = 0;
+		for (const auto& queueFamily : queueFamilies)
+		{
+			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT & flags)
+			{
+				indices.graphicsFamily = i;
+			}
+
+			if (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT & flags)
+			{
+				indices.computeFamily = i;
+			}
+
+			if (isQueueSupportPresentation(device, i))
+			{
+				indices.presentFamily = i;
+			}
+
+			if (indices.isComplete())
+			{
+				break;
+			}
+
+			i++;
+		}
+		return indices;
+	}
+
+	QueueFamilyIndices VulkanContext::getAvaibleQueueFamilies() const
+	{
+		return findQueueFamilies(m_PhysicalDevice, VK_QUEUE_GRAPHICS_BIT);
+	}
+	VkPhysicalDeviceFeatures VulkanContext::getSupportedFeatures() const
 	{
 		VkPhysicalDeviceProperties deviceProperties;
 		VkPhysicalDeviceFeatures deviceFeatures;
@@ -167,37 +286,4 @@ namespace vkEngine
 		return requiredExtensions.empty();
 	}
 
-	QueueFamilyIndices VulkanContext::findQueueFamilies(VkPhysicalDevice device)
-	{
-		QueueFamilyIndices indices;
-
-		uint32_t queueFamilyCount = 0;
-		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-		int i = 0;
-		for (const auto& queueFamily : queueFamilies)
-		{
-			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-			{
-				indices.graphicsFamily = i;
-			}
-
-			VkBool32 presentSupport = false;
-			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_Engine->getApp()->getSurface(), &presentSupport);
-			if (presentSupport)
-			{
-				indices.presentFamily = i;
-			}
-
-			if (indices.isComplete())
-			{
-				break;
-			}
-
-			i++;
-		}
-		return indices;
-	}
 }

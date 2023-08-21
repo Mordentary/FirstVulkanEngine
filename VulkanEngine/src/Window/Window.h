@@ -20,19 +20,25 @@ namespace vkEngine
 		~Window();
 
 		inline GLFWwindow* getWindowGLFW() { return m_glfwWindow; }
-		inline bool shouldClose() { return glfwWindowShouldClose(m_glfwWindow); };
+
+		inline bool shouldClose() const { return glfwWindowShouldClose(m_glfwWindow); };
 		inline void setCursorPosition(float xPos, float yPos) { glfwSetCursorPos(m_glfwWindow, xPos, yPos); };
-		
-		std::pair<float, float> getCursorPosition();
-		std::pair<double, double> getWindowSize();
+		inline void setWindowTitle(const char* title);
+
+
+		std::pair<float, float> getCursorPosition() const;
+		std::pair<double, double> getWindowSize() const;
+
+
 		void disableCursor(bool IsDisabled);
-		void pollEvents() { glfwPollEvents(); }
+		void pollEvents() const { glfwPollEvents(); }
+		void waitEvents() const { glfwWaitEvents(); }
 	private:
 		void createSurface(VkInstance instance, VkSurfaceKHR& surface);
 		void initWindow();
 	private:
 		GLFWwindow* m_glfwWindow{ nullptr };
-		int m_Width = 1000, m_Height = 1000;
+		int m_InitialWidth = 1000, m_InitialHeight = 1000;
 		std::string m_Title{};
 
 	};

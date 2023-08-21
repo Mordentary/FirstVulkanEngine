@@ -1,3 +1,7 @@
+# Compiler
+VulkanEngine/shaders/compiler/
+
+
 # Binaries
 **/bin/
 !vendor/bin/premake/
@@ -9,3 +13,4 @@ configLog/
 **.vcxproj
 **.vcxproj.filters
 **.vcxproj.user
+ShaderCompilation.**

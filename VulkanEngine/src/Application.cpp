@@ -41,9 +41,9 @@ namespace vkEngine
 	{
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pApplicationName = "VulkanDemo";
+		appInfo.pApplicationName = m_AppName.c_str();
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.pEngineName = "CringeEngine";
+		appInfo.pEngineName = "CRYingeEngine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.apiVersion = VK_API_VERSION_1_2;
 
@@ -119,29 +119,6 @@ namespace vkEngine
 		return extensions;
 	}
 
-	SwapChainSupportDetails Application::querySwapChainSupport(VkPhysicalDevice device) const
-	{
-		SwapChainSupportDetails details;
-		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_Surface, &details.capabilities);
-
-		uint32_t formatCount;
-		vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_Surface, &formatCount, nullptr);
-		if (formatCount != 0)
-		{
-			details.formats.resize(formatCount);
-			vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_Surface, &formatCount, details.formats.data());
-		}
-
-		uint32_t presentMode;
-		vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_Surface, &presentMode, nullptr);
-		if (presentMode != 0)
-		{
-			details.presentModes.resize(presentMode);
-			vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_Surface, &presentMode, details.presentModes.data());
-		}
-
-		return details;
-	}
 	void Application::cleanup()
 	{
 		if (m_EnableValidationLayers && validationLayers.size() > 0)

@@ -4,7 +4,7 @@
 namespace vkEngine
 {
 
-	Window::Window(uint32_t width, uint32_t height, const std::string& title) : m_Width(width), m_Height(height), m_Title(title)
+	Window::Window(uint32_t width, uint32_t height, const std::string& title) : m_InitialWidth(width), m_InitialHeight(height), m_Title(title)
 	{
 		initWindow();
 	}
@@ -21,8 +21,7 @@ namespace vkEngine
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-
-		m_glfwWindow = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr);
+		m_glfwWindow = glfwCreateWindow(m_InitialWidth, m_InitialHeight, m_Title.c_str(), nullptr, nullptr);
 	}
 
 	void Window::disableCursor(bool isDisabled)
@@ -38,16 +37,25 @@ namespace vkEngine
 		ENGINE_ASSERT(glfwCreateWindowSurface(instance, m_glfwWindow, nullptr, &surface) == VK_SUCCESS, "Window sufrace creation failed");
 	}
 
-	std::pair<float, float> Window::getCursorPosition()
+	inline void Window::setWindowTitle(const char* title)
+	{
+		m_Title = title;
+		glfwSetWindowTitle(m_glfwWindow, title);
+	}
+
+	std::pair<float, float> Window::getCursorPosition() const
 	{
 		double mouseX, mouseY;
 		glfwGetCursorPos(m_glfwWindow, &mouseX, &mouseY);
 		return { mouseX, mouseY };
 	}
 
-	std::pair<double, double> Window::getWindowSize()
+	std::pair<double, double> Window::getWindowSize() const
 	{
-		glfwGetFramebufferSize(m_glfwWindow, &m_Width, &m_Height);
-		return { m_Width, m_Height };
+		int width, height;
+		glfwGetFramebufferSize(m_glfwWindow, &width, &height);
+		return { width, height };
 	}
+
+
 }

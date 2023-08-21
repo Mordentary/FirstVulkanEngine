@@ -17,7 +17,6 @@ namespace vkEngine
 		const Shared<Window> getWindow() const { return m_Window; };
 		VkInstance getInstance() const { return m_Instance; };
 		VkSurfaceKHR getSurface() const { return m_Surface; }
-		SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) const;
 	private:
 
 	private:
@@ -28,9 +27,10 @@ namespace vkEngine
 		std::vector<const char*> getRequiredExtensions();
 	private:
 		Shared<Engine> m_Engine = nullptr;
+		Shared<Window> m_Window = nullptr;
+		
 		VkInstance m_Instance = nullptr;
 		VkSurfaceKHR m_Surface = nullptr;
-		Shared<Window> m_Window = nullptr;
 		Scoped<ValidationLayersManager> m_ValidationLayersManager = nullptr;
 		const std::string m_AppName{};
 		bool m_EnableValidationLayers;

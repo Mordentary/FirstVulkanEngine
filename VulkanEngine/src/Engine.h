@@ -10,11 +10,12 @@
 
 
 
-const int MAX_FRAMES_IN_FLIGHT = 3;
 
 
 namespace vkEngine
 {
+
+
 	struct Vertex
 	{
 		glm::vec3 position;
@@ -56,12 +57,18 @@ namespace vkEngine
 		{{-0.5f, -0.5f, 0.f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
 		{{0.5f, -0.5f, 0.f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
 		{{0.5f, 0.5f, 0.f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-		{{-0.5f, 0.5f, 0.f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+		{{-0.5f, 0.5f, 0.f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+
+		{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 	};
 
 	const std::vector<uint16_t> indices =
 	{
-			0, 1, 2, 2, 3, 0
+			0, 1, 2, 2, 3, 0,
+			4, 5, 6, 6, 7, 4
 	};
 
 	struct UniformBufferObject
@@ -73,14 +80,17 @@ namespace vkEngine
 
 
 	class Application;
+
 	class Engine
 	{
 	public:
-		void run();
-
-		const Application* getApp() const { return m_App; };
 		Engine(const Application* app) : m_App(app) {};
 
+		void run();
+		const Application* getApp() const { return m_App; };
+	public:
+		static const uint32_t s_MaxFramesInFlight = 3;
+		VkRenderPass m_RenderPass{ VK_NULL_HANDLE };
 	private:
 		void update(Timestep deltaTime);
 		void render();
@@ -91,14 +101,10 @@ namespace vkEngine
 		const Application* m_App;
 		Shared<VulkanContext> m_Context;
 		Shared<Camera> m_Camera;
-
+	
 	private:
 		void initVulkan();
-		void initSwapchain();
-		void recreateSwapchain();
-		void cleanupSwapChain();
 
-		void initSwapchainImageViews();
 
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& abailableModes);
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
@@ -112,7 +118,6 @@ namespace vkEngine
 		static std::vector<char> readFile(const std::string& filename);
 		VkShaderModule createShaderModule(const std::vector<char>& code);
 
-		void initFramebuffers();
 		void initRenderPass();
 
 		void initCommandPool();
@@ -136,6 +141,7 @@ namespace vkEngine
 		void initTextureImageView();
 		void initTextureSampler();
 
+		void initDepthResources();
 
 		void updateUniformBuffer(uint32_t currentFrame, Timestep deltaTime);
 
@@ -146,22 +152,11 @@ namespace vkEngine
 		void initSyncObjects();
 	private:
 
-		VkSwapchainKHR m_Swapchain{ VK_NULL_HANDLE };
-		std::vector<VkImage> m_SwapchainImages{};
-		std::vector<VkImageView> m_SwapchainImageViews{};
-		VkFormat m_SwapchainImageFormat;
-		VkExtent2D m_SwapchainExtent{};
-
-
-
-		std::vector<VkFramebuffer> m_SwapchainFramebuffers{};
-
 		VkDescriptorSetLayout m_DescriptorSetLayout;
 		VkDescriptorPool m_DesciptorPool;
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 
 		VkPipeline m_GraphicsPipeline;
-		VkRenderPass m_RenderPass{ VK_NULL_HANDLE };
 		VkPipelineLayout m_PipelineLayout{ VK_NULL_HANDLE };
 
 		VkBuffer m_VertexBuffer;
@@ -176,6 +171,11 @@ namespace vkEngine
 		VkDeviceMemory m_TextureMemory;
 
 
+		VkImage m_DepthImage;
+		VkDeviceMemory m_DepthImageMemory;
+		VkImageView m_DepthImageView;
+
+
 		std::vector<VkBuffer>  m_UniformBuffers{};
 		std::vector<VkDeviceMemory> m_UniformBuffersMemory{};
 		std::vector<void*> m_UniformBuffersMapped{};
@@ -183,7 +183,6 @@ namespace vkEngine
 		VkCommandPool m_CommandPool;
 		std::vector<VkCommandBuffer> m_CommandBuffers{};
 
-		std::vector<VkSemaphore> m_ImageAvailableSemaphores{};
 		std::vector<VkSemaphore> m_RenderFinishedSemaphores{};
 		std::vector<VkFence> m_InFlightFences{};
 	};
