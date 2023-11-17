@@ -6,7 +6,6 @@
 #include <algorithm>
 #include "Core.h"
 
-
 namespace vkEngine
 {
 	class Window;
@@ -34,7 +33,6 @@ namespace vkEngine
 		void recreateSwapchain(VkRenderPass renderpass);
 		void cleanupSwapchain();
 
-
 		VkSemaphore getImageSemaphore(uint32_t frame) { return m_ImageAvailableSemaphores[frame]; }
 		VkFormat getImagesFormat() const { return m_SwapchainImageFormat; }
 		VkExtent2D getExtent() const { return m_SwapchainExtent; }
@@ -60,15 +58,16 @@ namespace vkEngine
 		std::vector<VkSemaphore> m_ImageAvailableSemaphores{};
 
 		std::vector<VkFramebuffer> m_SwapchainFramebuffers{};
+
+		//TODO: should I go with different image class aka swapchainImage?
 		std::vector<VkImage> m_SwapchainImages{};
 		std::vector<VkImageView> m_SwapchainImageViews{};
 		VkFormat m_SwapchainImageFormat{};
 		VkExtent2D m_SwapchainExtent{};
+
 		uint32_t m_ImageIndex;
 		const uint32_t& m_MaxFramesInFlight;
 
 		uint32_t m_Width = 1000, m_Height = 1000;
-
 	};
-
 }

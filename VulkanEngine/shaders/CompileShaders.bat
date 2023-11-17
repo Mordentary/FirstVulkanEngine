@@ -14,4 +14,6 @@ for %%f in ("%shader_dir%\*.vert" "%shader_dir%\*.frag") do (
 
 endlocal
 
+echo Done
+
 pause

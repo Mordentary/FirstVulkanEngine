@@ -3,12 +3,11 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include "Logger/Logger.h"
 #include "Swapchain.h"
+#include "Devices/Instance.h"
 
 namespace vkEngine
 {
-
 	class Application;
 	class Window
 	{
@@ -24,22 +23,23 @@ namespace vkEngine
 		inline bool shouldClose() const { return glfwWindowShouldClose(m_glfwWindow); };
 		inline void setCursorPosition(float xPos, float yPos) { glfwSetCursorPos(m_glfwWindow, xPos, yPos); };
 		inline void setWindowTitle(const char* title);
-
+		VkSurfaceKHR getSurface() const { return m_Surface; }
 
 		std::pair<float, float> getCursorPosition() const;
 		std::pair<double, double> getWindowSize() const;
-
 
 		void disableCursor(bool IsDisabled);
 		void pollEvents() const { glfwPollEvents(); }
 		void waitEvents() const { glfwWaitEvents(); }
 	private:
-		void createSurface(VkInstance instance, VkSurfaceKHR& surface);
+		void createSurface(const Shared<Instance>& inst);
+		void destroySurface(const Shared<Instance>& inst);
+
 		void initWindow();
 	private:
 		GLFWwindow* m_glfwWindow{ nullptr };
+		VkSurfaceKHR m_Surface = nullptr; //TODO: WRAPPER CLASS
 		int m_InitialWidth = 1000, m_InitialHeight = 1000;
 		std::string m_Title{};
-
 	};
 }

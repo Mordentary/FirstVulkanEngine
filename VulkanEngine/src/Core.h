@@ -16,6 +16,8 @@ const bool DEBUG_BUILD_CONFIGURATION = true;
 
 namespace vkEngine
 {
+	using QueueFamilyIndex = uint32_t;
+	
 	template<typename T>
 	using Shared = std::shared_ptr<T>;
 	template<typename T, typename ... Args>
@@ -31,5 +33,4 @@ namespace vkEngine
 	{
 		return std::make_unique<T>(std::forward<Args>(args)...);
 	}
-
 }

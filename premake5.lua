@@ -40,6 +40,9 @@ project "VulkanEngine"
     targetdir("bin/" .. outputdir ..  "/%{prj.name}")
 	objdir("bin-int/" .. outputdir ..  "/%{prj.name}")
 
+    pchheader "pch.h"
+	pchsource "VulkanEngine/src/pch.cpp"
+
     files 
 	{
 		"%{prj.name}/src/**.h",
@@ -118,13 +121,14 @@ project "VulkanEngine"
         defines "_DEBUG"
         runtime "Debug"
         symbols "On"
+        flags {"NoIncrementalLink" }
         targetname "VulkanTest_Debug"
     
     filter "configurations:Release"
         defines "_RELEASE"
         runtime "Release"
         symbols "Off"
-        optimize "On"
+        optimize "Full"
         targetname "VulkanTest_Release"
 
 

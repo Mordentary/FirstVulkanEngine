@@ -1,16 +1,18 @@
+#include "pch.h"
+
 #include "QueueHandler.h"
 
 namespace vkEngine
 {
 	QueueHandler::QueueHandler(const VulkanContext& context)
-		: m_Context(context), m_Device(context.getDevice())
+		: m_Context(context), m_Device(context.getLogicalDevice()->logicalDevice())
 	{
 		initQueues();
 	}
 
 	void QueueHandler::initQueues()
 	{
-		m_QueueIndices = m_Context.getAvaibleQueueFamilies();
+		m_QueueIndices = m_Context.getPhysicalDevice()->getAvaibleQueueFamilies();
 		queryQueues();
 	}
 
@@ -45,7 +47,6 @@ namespace vkEngine
 	{
 		QueueFamilyIndex graphicsFamily = m_QueueIndices.graphicsFamily.value();
 		QueueFamilyIndex presentFamily = m_QueueIndices.presentFamily.value();
-
 
 		vkGetDeviceQueue(m_Device, graphicsFamily, 0, &m_GraphicsQueue);
 		vkGetDeviceQueue(m_Device, presentFamily, 0, &m_PresentQueue);

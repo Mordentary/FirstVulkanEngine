@@ -161,7 +161,6 @@ namespace glm
 	typedef float					highp_float32_t;
 	typedef float					float32_t;
 
-
 	typedef double					lowp_f64;
 	typedef double					mediump_f64;
 	typedef double					highp_f64;
@@ -678,7 +677,7 @@ namespace glm
 	typedef mat<4, 2, f32, lowp>		lowp_f32mat4x2;
 	typedef mat<4, 3, f32, lowp>		lowp_f32mat4x3;
 	typedef mat<4, 4, f32, lowp>		lowp_f32mat4x4;
-	
+
 	typedef mat<2, 2, f32, mediump>		mediump_f32mat2x2;
 	typedef mat<2, 3, f32, mediump>		mediump_f32mat2x3;
 	typedef mat<2, 4, f32, mediump>		mediump_f32mat2x4;
@@ -831,7 +830,6 @@ namespace glm
 	typedef mat<4, 3, int, defaultp>	imat4x3;
 	typedef mat<4, 4, int, defaultp>	imat4x4;
 
-
 	typedef mat<2, 2, int8, lowp>		lowp_i8mat2x2;
 	typedef mat<2, 3, int8, lowp>		lowp_i8mat2x3;
 	typedef mat<2, 4, int8, lowp>		lowp_i8mat2x4;
@@ -871,7 +869,6 @@ namespace glm
 	typedef mat<4, 2, int8, defaultp>	i8mat4x2;
 	typedef mat<4, 3, int8, defaultp>	i8mat4x3;
 	typedef mat<4, 4, int8, defaultp>	i8mat4x4;
-
 
 	typedef mat<2, 2, int16, lowp>		lowp_i16mat2x2;
 	typedef mat<2, 3, int16, lowp>		lowp_i16mat2x3;
@@ -913,7 +910,6 @@ namespace glm
 	typedef mat<4, 3, int16, defaultp>	i16mat4x3;
 	typedef mat<4, 4, int16, defaultp>	i16mat4x4;
 
-
 	typedef mat<2, 2, int32, lowp>		lowp_i32mat2x2;
 	typedef mat<2, 3, int32, lowp>		lowp_i32mat2x3;
 	typedef mat<2, 4, int32, lowp>		lowp_i32mat2x4;
@@ -954,7 +950,6 @@ namespace glm
 	typedef mat<4, 3, int32, defaultp>	i32mat4x3;
 	typedef mat<4, 4, int32, defaultp>	i32mat4x4;
 
-
 	typedef mat<2, 2, int64, lowp>		lowp_i64mat2x2;
 	typedef mat<2, 3, int64, lowp>		lowp_i64mat2x3;
 	typedef mat<2, 4, int64, lowp>		lowp_i64mat2x4;
@@ -994,7 +989,6 @@ namespace glm
 	typedef mat<4, 2, int64, defaultp>	i64mat4x2;
 	typedef mat<4, 3, int64, defaultp>	i64mat4x3;
 	typedef mat<4, 4, int64, defaultp>	i64mat4x4;
-
 
 	// Unsigned integer matrix MxN
 
@@ -1038,7 +1032,6 @@ namespace glm
 	typedef mat<4, 3, uint, defaultp>	umat4x3;
 	typedef mat<4, 4, uint, defaultp>	umat4x4;
 
-
 	typedef mat<2, 2, uint8, lowp>		lowp_u8mat2x2;
 	typedef mat<2, 3, uint8, lowp>		lowp_u8mat2x3;
 	typedef mat<2, 4, uint8, lowp>		lowp_u8mat2x4;
@@ -1078,7 +1071,6 @@ namespace glm
 	typedef mat<4, 2, uint8, defaultp>	u8mat4x2;
 	typedef mat<4, 3, uint8, defaultp>	u8mat4x3;
 	typedef mat<4, 4, uint8, defaultp>	u8mat4x4;
-
 
 	typedef mat<2, 2, uint16, lowp>		lowp_u16mat2x2;
 	typedef mat<2, 3, uint16, lowp>		lowp_u16mat2x3;
@@ -1120,7 +1112,6 @@ namespace glm
 	typedef mat<4, 3, uint16, defaultp>	u16mat4x3;
 	typedef mat<4, 4, uint16, defaultp>	u16mat4x4;
 
-
 	typedef mat<2, 2, uint32, lowp>		lowp_u32mat2x2;
 	typedef mat<2, 3, uint32, lowp>		lowp_u32mat2x3;
 	typedef mat<2, 4, uint32, lowp>		lowp_u32mat2x4;
@@ -1160,7 +1151,6 @@ namespace glm
 	typedef mat<4, 2, uint32, defaultp>	u32mat4x2;
 	typedef mat<4, 3, uint32, defaultp>	u32mat4x3;
 	typedef mat<4, 4, uint32, defaultp>	u32mat4x4;
-
 
 	typedef mat<2, 2, uint64, lowp>		lowp_u64mat2x2;
 	typedef mat<2, 3, uint64, lowp>		lowp_u64mat2x3;
@@ -1229,5 +1219,3 @@ namespace glm
 	typedef qua<f64, highp>				highp_f64quat;
 	typedef qua<f64, defaultp>			f64quat;
 }//namespace glm
-
-

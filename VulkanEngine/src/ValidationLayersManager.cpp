@@ -1,10 +1,10 @@
+#include "pch.h"
+
 #include "ValidationLayersManager.h"
 #include"VulkanContext.h"
-#include <Logger/Logger.h>
 
 namespace vkEngine
 {
-
 	ValidationLayersManager::ValidationLayersManager(const std::vector<const char*>& validationLayers)
 		: m_ValidationLayers(validationLayers)
 	{
@@ -21,35 +21,33 @@ namespace vkEngine
 		createInfo.pUserData = nullptr;
 	}
 
-	VkResult ValidationLayersManager::createDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
+	VkResult ValidationLayersManager::createDebugUtilsMessengerEXT(VkInstance getInstance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
 	{
-		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(getInstance, "vkCreateDebugUtilsMessengerEXT");
 		if (func != nullptr)
 		{
-			return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+			return func(getInstance, pCreateInfo, pAllocator, pDebugMessenger);
 		}
 		else {
 			return VK_ERROR_EXTENSION_NOT_PRESENT;
 		}
 	}
 
-	void ValidationLayersManager::setupDebugMessanger(VkInstance instance)
+	void ValidationLayersManager::setupDebugMessanger(VkInstance getInstance)
 	{
 		VkDebugUtilsMessengerCreateInfoEXT createInfo{};
 		populateDebugMessengerCreateInfo(createInfo);
-		ENGINE_ASSERT(createDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &m_DebugMessenger) == VK_SUCCESS, "Debug messanger creation failed");
+		ENGINE_ASSERT(createDebugUtilsMessengerEXT(getInstance, &createInfo, nullptr, &m_DebugMessenger) == VK_SUCCESS, "Debug messanger creation failed");
 	}
-	
-	void ValidationLayersManager::destroyDebugMessenger(VkInstance instance)
+
+	void ValidationLayersManager::destroyDebugMessenger(VkInstance getInstance)
 	{
-		auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+		auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(getInstance, "vkDestroyDebugUtilsMessengerEXT");
 		if (func != nullptr)
 		{
-			func(instance, m_DebugMessenger, nullptr);
+			func(getInstance, m_DebugMessenger, nullptr);
 		}
 	}
-
-
 
 	bool ValidationLayersManager::checkValidationLayerSupport()
 	{
@@ -75,7 +73,6 @@ namespace vkEngine
 		return true;
 	}
 
-
 	VKAPI_ATTR VkBool32 VKAPI_CALL ValidationLayersManager::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
 		switch (messageSeverity)
@@ -95,6 +92,4 @@ namespace vkEngine
 		}
 		return VK_FALSE;
 	}
-
 }
-

@@ -28,7 +28,6 @@ namespace vkEngine
 			assert(level >= LogLevel::Trace && level <= LogLevel::Fatal && "Invalid log level");
 			assert(message);
 
-
 			constexpr size_t BUFFER_SIZE = KB(4);
 			char buffer[BUFFER_SIZE] = {};
 			sprintf_s(buffer, sizeof(buffer), message, args...);
@@ -52,7 +51,6 @@ namespace vkEngine
 		static Logger s_Instance;
 
 		const char* m_LogLevelNames[6] = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL" };
-
 	};
 }
 
@@ -71,8 +69,7 @@ namespace vkEngine
 			ENGINE_ERROR(msg, __VA_ARGS__);				\
 			__debugbreak();							 	\
 		}												\
-	}												
-#elif _RELEASE 
+	}
+#elif _RELEASE
 #define ENGINE_ASSERT(x, msg, ...) x;
 #endif
-

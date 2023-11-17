@@ -1,21 +1,7 @@
+#include "pch.h"
+
 #include "Engine.h"
 
-#include <Logger/Logger.h>
-#include <set>
-#include <string>
-#include <unordered_set>
-#include <algorithm>
-#include <fstream>
-#include <glm/gtx/transform.hpp>
-#include <chrono>
-
-#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
-#include<glm/glm.hpp>
-#include<glm/gtc/type_ptr.hpp>
-#include<glm/gtx/rotate_vector.hpp>
-#include<glm/gtx/vector_angle.hpp>
-#include <stb_image.h>
-#include "TimeHelper.h"
 #include "Application.h"
 #include "QueueHandler.h"
 
@@ -29,6 +15,13 @@ namespace vkEngine
 
 	const int WINDOW_STARTUP_HEIGHT = 1000, WINDOW_STARTUP_WIDTH = 1000;
 	const std::string APP_NAME = "VulkanEngine";
+
+	Engine::Engine(const Application* app)
+	: m_App(app)
+	{
+		initInstance();
+	};
+
 
 	void vkEngine::Engine::run()
 	{
@@ -48,31 +41,34 @@ namespace vkEngine
 			timer.Stop();
 		}
 
-		vkDeviceWaitIdle(m_Context->getDevice());
+		vkDeviceWaitIdle(m_Context->getLogicalDevice()->logicalDevice());
 		cleanup();
 	}
 
 	void Engine::init()
 	{
-		m_Context = CreateShared<VulkanContext>(this, deviceExtensions);
+		m_Context = CreateShared<VulkanContext>(*this, deviceExtensions);
 		m_Camera = CreateShared<Camera>(glm::vec3{ 0.f, 0.5f, -1.f }, glm::vec3{ 0.f }, m_App->getWindow());
 
 		initVulkan();
 	}
 
+	void Engine::initInstance()
+	{
+		m_Instance = CreateShared<Instance>(m_App->getAppName(), m_App->getValidationLayers(), m_App->isValidationLayersEnabled());
+	}
+
 	void vkEngine::Engine::initVulkan()
 	{
-
 		initRenderPass();
 		initDescriptorsSetLayout();
 		initGraphicsPipeline();
-		m_Context->getSwapchain()->initFramebuffers(m_RenderPass);
+		m_Context->getSwapchain()->initFramebuffers(m_RenderPass); // TODO: Framebuffers are part of renderpass not swapchain. Not a good place for this.
 		initCommandPool();
 		initCommandBuffer();
 		initTextureImage();
 		initTextureImageView();
 		initTextureSampler();
-
 
 		initVertexBuffer();
 		initIndexBuffer();
@@ -84,8 +80,6 @@ namespace vkEngine
 
 	void vkEngine::Engine::update(Timestep deltaTime)
 	{
-
-
 		m_Camera->Update(deltaTime);
 
 		updateUniformBuffer(nextRenderFrame, deltaTime);
@@ -95,8 +89,7 @@ namespace vkEngine
 
 	void Engine::render()
 	{
-		vkWaitForFences(m_Context->getDevice(), 1, &m_InFlightFences[nextRenderFrame], VK_TRUE, UINT64_MAX);
-
+		vkWaitForFences(m_Context->getLogicalDevice()->logicalDevice(), 1, &m_InFlightFences[nextRenderFrame], VK_TRUE, UINT64_MAX);
 
 		auto& swapchain = m_Context->getSwapchain();
 		VkResult result = swapchain->acquireNextImage(nextRenderFrame);
@@ -110,7 +103,7 @@ namespace vkEngine
 		else
 			ENGINE_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "failed to acquire swap chain image!");
 
-		vkResetFences(m_Context->getDevice(), 1, &m_InFlightFences[nextRenderFrame]);
+		vkResetFences(m_Context->getLogicalDevice()->logicalDevice(), 1, &m_InFlightFences[nextRenderFrame]);
 
 		vkResetCommandBuffer(m_CommandBuffers[nextRenderFrame], 0);
 		recordCommandBuffer(m_CommandBuffers[nextRenderFrame], imageIndex);
@@ -142,8 +135,7 @@ namespace vkEngine
 	{
 		//TODO: swapchain deletion
 
-		VkDevice device = m_Context->getDevice();;
-
+		VkDevice device = m_Context->getLogicalDevice()->logicalDevice();
 
 		vkDestroySampler(device, m_TextureSampler, nullptr);
 		vkDestroyImageView(device, m_TextureView, nullptr);
@@ -311,7 +303,7 @@ namespace vkEngine
 		allocInfo.commandBufferCount = 1;
 
 		VkCommandBuffer commandBuffer;
-		vkAllocateCommandBuffers(m_Context->getDevice(), &allocInfo, &commandBuffer);
+		vkAllocateCommandBuffers(m_Context->getLogicalDevice()->logicalDevice(), &allocInfo, &commandBuffer);
 
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -333,7 +325,8 @@ namespace vkEngine
 
 		m_Context->getQueueHandler()->submitAndWaitIdle(submitInfo);
 
-		vkFreeCommandBuffers(m_Context->getDevice(), m_CommandPool, 1, &commandBuffer);
+		vkFreeCommandBuffers(m_Context->getLogicalDevice()->logicalDevice(), m_CommandPool, 1, &commandBuffer);
+
 	}
 
 	//void Engine::initSwapchain()
@@ -392,9 +385,6 @@ namespace vkEngine
 	//	m_SwapchainImages.resize(imageCount);
 	//	vkGetSwapchainImagesKHR(m_Context->getDevice(), m_Swapchain, &imageCount, m_SwapchainImages.data());
 	//}
-
-
-
 
 	VkPresentModeKHR Engine::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& abailableModes)
 	{
@@ -464,7 +454,7 @@ namespace vkEngine
 		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 		layoutInfo.pBindings = bindings.data();
 
-		ENGINE_ASSERT(vkCreateDescriptorSetLayout(m_Context->getDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayout) == VK_SUCCESS, "Layout descriptors set creation failed");
+		ENGINE_ASSERT(vkCreateDescriptorSetLayout(m_Context->getLogicalDevice()->logicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayout) == VK_SUCCESS, "Layout descriptors set creation failed");
 	}
 
 	void Engine::initDescriptorPool()
@@ -481,8 +471,7 @@ namespace vkEngine
 		poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
 		poolInfo.maxSets = static_cast<uint32_t>(s_MaxFramesInFlight);
-		ENGINE_ASSERT(vkCreateDescriptorPool(m_Context->getDevice(), &poolInfo, nullptr, &m_DesciptorPool) == VK_SUCCESS, "Descriptor pool creation failed");
-
+		ENGINE_ASSERT(vkCreateDescriptorPool(m_Context->getLogicalDevice()->logicalDevice(), &poolInfo, nullptr, &m_DesciptorPool) == VK_SUCCESS, "Descriptor pool creation failed");
 	}
 
 	void Engine::initDescriptorSets()
@@ -496,7 +485,7 @@ namespace vkEngine
 
 		m_DescriptorSets.resize(s_MaxFramesInFlight);
 
-		ENGINE_ASSERT(vkAllocateDescriptorSets(m_Context->getDevice(), &allocInfo, m_DescriptorSets.data()) == VK_SUCCESS, "Descriptor sets allocations failed");
+		ENGINE_ASSERT(vkAllocateDescriptorSets(m_Context->getLogicalDevice()->logicalDevice(), &allocInfo, m_DescriptorSets.data()) == VK_SUCCESS, "Descriptor sets allocations failed");
 
 		for (size_t i = 0; i < s_MaxFramesInFlight; i++)
 		{
@@ -528,9 +517,7 @@ namespace vkEngine
 			descriptorWrites[1].descriptorCount = 1;
 			descriptorWrites[1].pImageInfo = &imageInfo;
 
-			vkUpdateDescriptorSets(m_Context->getDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-
-
+			vkUpdateDescriptorSets(m_Context->getLogicalDevice()->logicalDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
 	}
 
@@ -553,7 +540,7 @@ namespace vkEngine
 				m_UniformBuffersMemory[i]
 			);
 
-			vkMapMemory(m_Context->getDevice(), m_UniformBuffersMemory[i], 0, bufferSize, 0, &m_UniformBuffersMapped[i]);
+			vkMapMemory(m_Context->getLogicalDevice()->logicalDevice(), m_UniformBuffersMemory[i], 0, bufferSize, 0, &m_UniformBuffersMapped[i]);
 		}
 	}
 
@@ -568,13 +555,10 @@ namespace vkEngine
 		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
-
-
 		VkPhysicalDeviceProperties properties{};
-		vkGetPhysicalDeviceProperties(m_Context->getPhysicalDevice(), &properties);
+		vkGetPhysicalDeviceProperties(m_Context->getPhysicalDevice()->physicalDevice(), &properties);
 
-
-		if (m_Context->getDeviceEnabledFeatures().samplerAnisotropy)
+		if (m_Context->getPhysicalDevice()->getFeatures().samplerAnisotropy)
 		{
 			samplerInfo.anisotropyEnable = VK_TRUE;
 			samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
@@ -596,14 +580,11 @@ namespace vkEngine
 		samplerInfo.minLod = 0.0f;
 		samplerInfo.maxLod = 0.0f;
 
-		ENGINE_ASSERT(vkCreateSampler(m_Context->getDevice(), &samplerInfo, nullptr, &m_TextureSampler) == VK_SUCCESS, "Create sampler failed");
-
+		ENGINE_ASSERT(vkCreateSampler(m_Context->getLogicalDevice()->logicalDevice(), &samplerInfo, nullptr, &m_TextureSampler) == VK_SUCCESS, "Create sampler failed");
 	}
 
 	void Engine::initDepthResources()
 	{
-
-
 	}
 
 	VkImageView Engine::createImageView(VkImage image, VkFormat format)
@@ -620,7 +601,7 @@ namespace vkEngine
 		viewInfo.subresourceRange.layerCount = 1;
 
 		VkImageView imageView;
-		ENGINE_ASSERT(vkCreateImageView(m_Context->getDevice(), &viewInfo, nullptr, &imageView) == VK_SUCCESS, "ImageView creation failed");
+		ENGINE_ASSERT(vkCreateImageView(m_Context->getLogicalDevice()->logicalDevice(), &viewInfo, nullptr, &imageView) == VK_SUCCESS, "ImageView creation failed");
 
 		return imageView;
 	}
@@ -636,7 +617,7 @@ namespace vkEngine
 		int texWidth, texHeight, texChannels;
 		stbi_set_flip_vertically_on_load(true);
 		stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		VkDeviceSize imageSize = texWidth * texHeight * (texChannels < 3 ? texChannels : 4);
+		VkDeviceSize imageSize = static_cast<VkDeviceSize>(texWidth) * texHeight * (texChannels < 3 ? texChannels : 4);
 
 		ENGINE_ASSERT(pixels, (std::string("Failed to load image!") + " STB_IMAGE_FAILURE_REASON: " + stbi_failure_reason() + "! Path: " + path).c_str());
 
@@ -653,12 +634,11 @@ namespace vkEngine
 		);
 
 		void* data;
-		vkMapMemory(m_Context->getDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
+		vkMapMemory(m_Context->getLogicalDevice()->logicalDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
 		memcpy(data, pixels, static_cast<size_t>(imageSize));
-		vkUnmapMemory(m_Context->getDevice(), stagingBufferMemory);
+		vkUnmapMemory(m_Context->getLogicalDevice()->logicalDevice(), stagingBufferMemory);
 
 		stbi_image_free(pixels);
-
 
 		VkFormat format{};
 		if (texChannels == 4)
@@ -672,7 +652,6 @@ namespace vkEngine
 		else
 			ENGINE_ASSERT(false, "Format is not specified");
 
-
 		initImage(
 			texWidth, texHeight, format,
 			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -682,8 +661,8 @@ namespace vkEngine
 		copyBufferToImage(stagingBuffer, m_Texture, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 		transitionImageLayout(m_Texture, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-		vkDestroyBuffer(m_Context->getDevice(), stagingBuffer, nullptr);
-		vkFreeMemory(m_Context->getDevice(), stagingBufferMemory, nullptr);
+		vkDestroyBuffer(m_Context->getLogicalDevice()->logicalDevice(), stagingBuffer, nullptr);
+		vkFreeMemory(m_Context->getLogicalDevice()->logicalDevice(), stagingBufferMemory, nullptr);
 	}
 
 	void Engine::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
@@ -736,21 +715,19 @@ namespace vkEngine
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-
-		ENGINE_ASSERT(vkCreateImage(m_Context->getDevice(), &imageInfo, nullptr, &image) == VK_SUCCESS, "Image creation failed");
+		ENGINE_ASSERT(vkCreateImage(m_Context->getLogicalDevice()->logicalDevice(), &imageInfo, nullptr, &image) == VK_SUCCESS, "Image creation failed");
 
 		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(m_Context->getDevice(), image, &memRequirements);
-
+		vkGetImageMemoryRequirements(m_Context->getLogicalDevice()->logicalDevice(), image, &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-		ENGINE_ASSERT(vkAllocateMemory(m_Context->getDevice(), &allocInfo, nullptr, &imageMemory) == VK_SUCCESS, "Failed to allocate image memory");
+		ENGINE_ASSERT(vkAllocateMemory(m_Context->getLogicalDevice()->logicalDevice(), &allocInfo, nullptr, &imageMemory) == VK_SUCCESS, "Failed to allocate image memory");
 
-		vkBindImageMemory(m_Context->getDevice(), image, imageMemory, 0);
+		vkBindImageMemory(m_Context->getLogicalDevice()->logicalDevice(), image, imageMemory, 0);
 	}
 
 	void Engine::updateUniformBuffer(uint32_t currentFrame, Timestep deltaTime)
@@ -814,7 +791,6 @@ namespace vkEngine
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		inputAssembly.primitiveRestartEnable = VK_FALSE;
-
 
 		VkExtent2D swapchainExtent = m_Context->getSwapchain()->getExtent();
 		VkViewport viewport{};
@@ -884,7 +860,7 @@ namespace vkEngine
 		pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-		ENGINE_ASSERT(vkCreatePipelineLayout(m_Context->getDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout) == VK_SUCCESS, "Pipeline layout creation failed");
+		ENGINE_ASSERT(vkCreatePipelineLayout(m_Context->getLogicalDevice()->logicalDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout) == VK_SUCCESS, "Pipeline layout creation failed");
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -908,10 +884,10 @@ namespace vkEngine
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 		pipelineInfo.basePipelineIndex = -1; // Optional
 
-		ENGINE_ASSERT(vkCreateGraphicsPipelines(m_Context->getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) == VK_SUCCESS, "Pipeline creation failed");
+		ENGINE_ASSERT(vkCreateGraphicsPipelines(m_Context->getLogicalDevice()->logicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) == VK_SUCCESS, "Pipeline creation failed");
 
-		vkDestroyShaderModule(m_Context->getDevice(), fragShaderModule, nullptr);
-		vkDestroyShaderModule(m_Context->getDevice(), vertShaderModule, nullptr);
+		vkDestroyShaderModule(m_Context->getLogicalDevice()->logicalDevice(), fragShaderModule, nullptr);
+		vkDestroyShaderModule(m_Context->getLogicalDevice()->logicalDevice(), vertShaderModule, nullptr);
 	}
 
 	std::vector<char> Engine::readFile(const std::string& filename)
@@ -938,10 +914,9 @@ namespace vkEngine
 		moduleInfo.codeSize = code.size();
 
 		VkShaderModule shaderModule{};
-		ENGINE_ASSERT(vkCreateShaderModule(m_Context->getDevice(), &moduleInfo, nullptr, &shaderModule) == VK_SUCCESS, "Shader module creation failed")
+		ENGINE_ASSERT(vkCreateShaderModule(m_Context->getLogicalDevice()->logicalDevice(), &moduleInfo, nullptr, &shaderModule) == VK_SUCCESS, "Shader module creation failed")
 			return shaderModule;
 	}
-
 
 	void Engine::initRenderPass()
 	{
@@ -983,7 +958,7 @@ namespace vkEngine
 		renderPassInfo.dependencyCount = 1;
 		renderPassInfo.pDependencies = &dependency;
 
-		ENGINE_ASSERT(vkCreateRenderPass(m_Context->getDevice(), &renderPassInfo, nullptr, &m_RenderPass) == VK_SUCCESS, "Render pass creation failed");
+		ENGINE_ASSERT(vkCreateRenderPass(m_Context->getLogicalDevice()->logicalDevice(), &renderPassInfo, nullptr, &m_RenderPass) == VK_SUCCESS, "Render pass creation failed");
 	}
 
 	void Engine::initCommandPool()
@@ -997,7 +972,7 @@ namespace vkEngine
 		commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 		commandPoolInfo.queueFamilyIndex = (uint32_t)graphicsFamilyIndex;
 
-		ENGINE_ASSERT(vkCreateCommandPool(m_Context->getDevice(), &commandPoolInfo, nullptr, &m_CommandPool) == VK_SUCCESS, "Command pool creation failed");
+		ENGINE_ASSERT(vkCreateCommandPool(m_Context->getLogicalDevice()->logicalDevice(), &commandPoolInfo, nullptr, &m_CommandPool) == VK_SUCCESS, "Command pool creation failed");
 	}
 
 	void Engine::initCommandBuffer()
@@ -1009,7 +984,7 @@ namespace vkEngine
 		allocInfo.commandPool = m_CommandPool;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		allocInfo.commandBufferCount = static_cast<uint32_t>(m_CommandBuffers.size());
-		ENGINE_ASSERT(vkAllocateCommandBuffers(m_Context->getDevice(), &allocInfo, m_CommandBuffers.data()) == VK_SUCCESS, "Command buffer allocation failed")
+		ENGINE_ASSERT(vkAllocateCommandBuffers(m_Context->getLogicalDevice()->logicalDevice(), &allocInfo, m_CommandBuffers.data()) == VK_SUCCESS, "Command buffer allocation failed")
 	}
 
 	void Engine::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
@@ -1071,19 +1046,19 @@ namespace vkEngine
 		bufferInfo.usage = usage;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		ENGINE_ASSERT(vkCreateBuffer(m_Context->getDevice(), &bufferInfo, nullptr, &buffer) == VK_SUCCESS, "Buffer creation failed");
+		ENGINE_ASSERT(vkCreateBuffer(m_Context->getLogicalDevice()->logicalDevice(), &bufferInfo, nullptr, &buffer) == VK_SUCCESS, "Buffer creation failed");
 
 		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(m_Context->getDevice(), buffer, &memRequirements);
+		vkGetBufferMemoryRequirements(m_Context->getLogicalDevice()->logicalDevice(), buffer, &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-		ENGINE_ASSERT(vkAllocateMemory(m_Context->getDevice(), &allocInfo, nullptr, &bufferMemory) == VK_SUCCESS, "Memory allocation failed");
+		ENGINE_ASSERT(vkAllocateMemory(m_Context->getLogicalDevice()->logicalDevice(), &allocInfo, nullptr, &bufferMemory) == VK_SUCCESS, "Memory allocation failed");
 
-		vkBindBufferMemory(m_Context->getDevice(), buffer, bufferMemory, 0);
+		vkBindBufferMemory(m_Context->getLogicalDevice()->logicalDevice(), buffer, bufferMemory, 0);
 	}
 
 	void Engine::initVertexBuffer()
@@ -1095,16 +1070,16 @@ namespace vkEngine
 		initBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 		void* data;
-		vkMapMemory(m_Context->getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
+		vkMapMemory(m_Context->getLogicalDevice()->logicalDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
 		memcpy(data, vertices.data(), (size_t)bufferSize);
-		vkUnmapMemory(m_Context->getDevice(), stagingBufferMemory);
+		vkUnmapMemory(m_Context->getLogicalDevice()->logicalDevice(), stagingBufferMemory);
 
 		initBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBuffer, m_VertexBufferMemory);
 
 		copyBuffer(stagingBuffer, m_VertexBuffer, bufferSize);
 
-		vkDestroyBuffer(m_Context->getDevice(), stagingBuffer, nullptr);
-		vkFreeMemory(m_Context->getDevice(), stagingBufferMemory, nullptr);
+		vkDestroyBuffer(m_Context->getLogicalDevice()->logicalDevice(), stagingBuffer, nullptr);
+		vkFreeMemory(m_Context->getLogicalDevice()->logicalDevice(), stagingBufferMemory, nullptr);
 	}
 
 	void Engine::initIndexBuffer()
@@ -1116,16 +1091,16 @@ namespace vkEngine
 		initBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 		void* data;
-		vkMapMemory(m_Context->getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
+		vkMapMemory(m_Context->getLogicalDevice()->logicalDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
 		memcpy(data, indices.data(), (size_t)bufferSize);
-		vkUnmapMemory(m_Context->getDevice(), stagingBufferMemory);
+		vkUnmapMemory(m_Context->getLogicalDevice()->logicalDevice(), stagingBufferMemory);
 
 		initBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_IndexBuffer, m_IndexBufferMemory);
 
 		copyBuffer(stagingBuffer, m_IndexBuffer, bufferSize);
 
-		vkDestroyBuffer(m_Context->getDevice(), stagingBuffer, nullptr);
-		vkFreeMemory(m_Context->getDevice(), stagingBufferMemory, nullptr);
+		vkDestroyBuffer(m_Context->getLogicalDevice()->logicalDevice(), stagingBuffer, nullptr);
+		vkFreeMemory(m_Context->getLogicalDevice()->logicalDevice(), stagingBufferMemory, nullptr);
 	}
 
 	void Engine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
@@ -1142,8 +1117,7 @@ namespace vkEngine
 	}
 	uint32_t Engine::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 	{
-		VkPhysicalDeviceMemoryProperties memProperties;
-		vkGetPhysicalDeviceMemoryProperties(m_Context->getPhysicalDevice(), &memProperties);
+		VkPhysicalDeviceMemoryProperties memProperties = m_Context->getPhysicalDevice()->getMemoryProperties();
 
 		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
 			if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
@@ -1155,7 +1129,6 @@ namespace vkEngine
 		return 0;
 	}
 
-
 	void Engine::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 	{
 		VkCommandBufferBeginInfo beginInfo{};
@@ -1164,8 +1137,6 @@ namespace vkEngine
 		beginInfo.pInheritanceInfo = nullptr; // Optional
 
 		ENGINE_ASSERT(vkBeginCommandBuffer(commandBuffer, &beginInfo) == VK_SUCCESS, "Beginning of command buffer failed");
-
-
 
 		VkExtent2D swapchainExtent = m_Context->getSwapchain()->getExtent();
 
@@ -1241,8 +1212,8 @@ namespace vkEngine
 		{
 			ENGINE_ASSERT
 			(
-				vkCreateSemaphore(m_Context->getDevice(), &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]) == VK_SUCCESS &&
-				vkCreateFence(m_Context->getDevice(), &fenceInfo, nullptr, &m_InFlightFences[i]) == VK_SUCCESS, "Sync objects creation failed"
+				vkCreateSemaphore(m_Context->getLogicalDevice()->logicalDevice(), &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]) == VK_SUCCESS &&
+				vkCreateFence(m_Context->getLogicalDevice()->logicalDevice(), &fenceInfo, nullptr, &m_InFlightFences[i]) == VK_SUCCESS, "Sync objects creation failed"
 			);
 		}
 	}

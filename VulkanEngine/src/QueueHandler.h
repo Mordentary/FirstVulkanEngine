@@ -4,8 +4,6 @@
 
 namespace vkEngine
 {
-
-
 	using QueueFamilyIndex = uint32_t;
 	struct QueueFamilyIndices
 	{
@@ -20,7 +18,6 @@ namespace vkEngine
 			if (computeFamily.has_value())
 				uniqueFamilies.insert(computeFamily.value());
 
-			
 			return static_cast<uint32_t>(uniqueFamilies.size());
 		}
 
@@ -56,12 +53,12 @@ namespace vkEngine
 		void submitAndWait(VkSubmitInfo submitInfo);
 		void submitAndWaitIdle(VkSubmitInfo submitInfo);
 
-
 		bool isGraphicsQueueSupported() const { return m_QueueIndices.graphicsFamily.has_value(); }
 		bool isPresentQueueSupported() const { return m_QueueIndices.presentFamily.has_value(); }
 		bool supportsAllIndices() const { return m_QueueIndices.graphicsFamily.has_value() && m_QueueIndices.presentFamily.has_value() && m_QueueIndices.computeFamily.has_value(); }
 		QueueFamilyIndices getQueueFamilyIndices() const { return m_QueueIndices; };
 		VkQueue getGraphicsQueue() const { return m_GraphicsQueue; }
+		VkQueue getPresentQueue() const { return m_PresentQueue; }
 	private:
 		void initQueues();
 		void queryQueues();

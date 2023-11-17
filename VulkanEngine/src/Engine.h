@@ -8,14 +8,8 @@
 #include "VulkanContext.h"
 #include "Camera/Camera.h"
 
-
-
-
-
 namespace vkEngine
 {
-
-
 	struct Vertex
 	{
 		glm::vec3 position;
@@ -78,33 +72,35 @@ namespace vkEngine
 		glm::mat4 projMat;
 	};
 
-
 	class Application;
 
 	class Engine
 	{
 	public:
-		Engine(const Application* app) : m_App(app) {};
 
+		Engine(const Application* app);
 		void run();
 		const Application* getApp() const { return m_App; };
 	public:
 		static const uint32_t s_MaxFramesInFlight = 3;
 		VkRenderPass m_RenderPass{ VK_NULL_HANDLE };
+		const Shared<Instance>& getInstance() const { return m_Instance; };
 	private:
 		void update(Timestep deltaTime);
 		void render();
 		void cleanup();
 		void init();
+		void initInstance();
+
 
 	private:
 		const Application* m_App;
 		Shared<VulkanContext> m_Context;
 		Shared<Camera> m_Camera;
-	
+		Shared<Instance> m_Instance;
+
 	private:
 		void initVulkan();
-
 
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& abailableModes);
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
@@ -170,11 +166,9 @@ namespace vkEngine
 		VkImage m_Texture;
 		VkDeviceMemory m_TextureMemory;
 
-
 		VkImage m_DepthImage;
 		VkDeviceMemory m_DepthImageMemory;
 		VkImageView m_DepthImageView;
-
 
 		std::vector<VkBuffer>  m_UniformBuffers{};
 		std::vector<VkDeviceMemory> m_UniformBuffersMemory{};

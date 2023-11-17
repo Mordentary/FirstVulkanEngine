@@ -47,8 +47,5 @@ namespace vkEngine
 		glm::vec3 m_CameraSpaceAxisX{ 1.0f, 0.0f, 0.0f };
 		glm::vec3 m_CameraSpaceAxisY{ 0.0f, 1.0f, 0.0f };
 		glm::vec3 m_CameraSpaceAxisZ{ 0.0f, 0.0f, -1.0f };
-
-
-
 	};
 }

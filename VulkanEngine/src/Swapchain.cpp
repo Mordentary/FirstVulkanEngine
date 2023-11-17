@@ -1,14 +1,14 @@
+#include "pch.h"
+
 #include "Swapchain.h"
 #include "VulkanContext.h"
-#include "logger/Logger.h"
 #include "QueueHandler.h"
 #include "window/Window.h"
 
 namespace vkEngine
 {
-
 	Swapchain::Swapchain(const Shared<Window>& window, VkSurfaceKHR surface, const VulkanContext& context, uint32_t maxFramesInFlight)
-		: m_Context(context), m_Window(window), m_Surface(surface), m_Device(context.getDevice()), m_MaxFramesInFlight(maxFramesInFlight)
+		: m_Context(context), m_Window(window), m_Surface(surface), m_Device(context.getLogicalDevice()->logicalDevice()), m_MaxFramesInFlight(maxFramesInFlight)
 	{
 		initSwapchain();
 		initImageViews();
@@ -34,8 +34,7 @@ namespace vkEngine
 			viewInfo.subresourceRange.baseArrayLayer = 0;
 			viewInfo.subresourceRange.layerCount = 1;
 
-			ENGINE_ASSERT(vkCreateImageView(m_Context.getDevice(), &viewInfo, nullptr, &m_SwapchainImageViews[i]) == VK_SUCCESS, "ImageView creation failed");
-
+			ENGINE_ASSERT(vkCreateImageView(m_Context.getLogicalDevice()->logicalDevice(), &viewInfo, nullptr, &m_SwapchainImageViews[i]) == VK_SUCCESS, "ImageView creation failed");
 		}
 	}
 
@@ -50,7 +49,7 @@ namespace vkEngine
 			m_Window->waitEvents();
 		}
 
-		vkDeviceWaitIdle(m_Context.getDevice());
+		vkDeviceWaitIdle(m_Context.getLogicalDevice()->logicalDevice());
 
 		cleanupSwapchain();
 
@@ -63,16 +62,16 @@ namespace vkEngine
 	{
 		for (size_t i = 0; i < m_SwapchainFramebuffers.size(); i++)
 		{
-			vkDestroyFramebuffer(m_Context.getDevice(), m_SwapchainFramebuffers[i], nullptr);
+			vkDestroyFramebuffer(m_Context.getLogicalDevice()->logicalDevice(), m_SwapchainFramebuffers[i], nullptr);
 		}
 
 		for (size_t i = 0; i < m_SwapchainImageViews.size(); i++)
 		{
-			vkDestroyImageView(m_Context.getDevice(), m_SwapchainImageViews[i], nullptr);
-			vkDestroySemaphore(m_Context.getDevice(), m_ImageAvailableSemaphores[i], nullptr);
+			vkDestroyImageView(m_Context.getLogicalDevice()->logicalDevice(), m_SwapchainImageViews[i], nullptr);
+			vkDestroySemaphore(m_Context.getLogicalDevice()->logicalDevice(), m_ImageAvailableSemaphores[i], nullptr);
 		}
 
-		vkDestroySwapchainKHR(m_Context.getDevice(), m_Swapchain, nullptr);
+		vkDestroySwapchainKHR(m_Context.getLogicalDevice()->logicalDevice(), m_Swapchain, nullptr);
 	}
 
 	void Swapchain::initFramebuffers(VkRenderPass renderpass)
@@ -95,7 +94,7 @@ namespace vkEngine
 			framebufferInfo.height = m_SwapchainExtent.height;
 			framebufferInfo.layers = 1;
 
-			ENGINE_ASSERT(vkCreateFramebuffer(m_Context.getDevice(), &framebufferInfo, nullptr, &m_SwapchainFramebuffers[i]) == VK_SUCCESS, "Framebuffer creation failed");
+			ENGINE_ASSERT(vkCreateFramebuffer(m_Context.getLogicalDevice()->logicalDevice(), &framebufferInfo, nullptr, &m_SwapchainFramebuffers[i]) == VK_SUCCESS, "Framebuffer creation failed");
 		}
 	}
 	void Swapchain::initSemaphores()
@@ -109,7 +108,7 @@ namespace vkEngine
 		{
 			ENGINE_ASSERT
 			(
-				vkCreateSemaphore(m_Context.getDevice(), &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]) == VK_SUCCESS, "Semaphore creation failed"
+				vkCreateSemaphore(m_Context.getLogicalDevice()->logicalDevice(), &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]) == VK_SUCCESS, "Semaphore creation failed"
 			);
 		}
 	}
@@ -162,7 +161,7 @@ namespace vkEngine
 
 	void Swapchain::initSwapchain()
 	{
-		SwapChainSupportDetails swapChainSupport = m_Context.querySwapChainSupport(m_Context.getPhysicalDevice());
+		SwapChainSupportDetails swapChainSupport = m_Context.getPhysicalDevice()->querySwapChainSupport();
 
 		VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
 		VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
@@ -223,7 +222,7 @@ namespace vkEngine
 
 	VkResult Swapchain::acquireNextImage(uint32_t frame)
 	{
-		return vkAcquireNextImageKHR(m_Context.getDevice(), m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[frame], VK_NULL_HANDLE, &m_ImageIndex);
+		return vkAcquireNextImageKHR(m_Context.getLogicalDevice()->logicalDevice(), m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[frame], VK_NULL_HANDLE, &m_ImageIndex);
 	}
 
 	void Swapchain::present(VkSemaphore* signalSemaphores, uint32_t count)
@@ -240,6 +239,6 @@ namespace vkEngine
 		presentInfo.pImageIndices = &m_ImageIndex;
 		presentInfo.pResults = nullptr; // Optional
 
-		vkQueuePresentKHR(m_Context.getQueueHandler()->getGraphicsQueue(), &presentInfo);
+		vkQueuePresentKHR(m_Context.getQueueHandler()->getPresentQueue(), &presentInfo);
 	}
 }

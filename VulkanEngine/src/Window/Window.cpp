@@ -1,9 +1,9 @@
-#include "Window.h"
+#include "pch.h"
 
+#include "Window.h"
 
 namespace vkEngine
 {
-
 	Window::Window(uint32_t width, uint32_t height, const std::string& title) : m_InitialWidth(width), m_InitialHeight(height), m_Title(title)
 	{
 		initWindow();
@@ -11,6 +11,7 @@ namespace vkEngine
 
 	Window::~Window()
 	{
+
 		glfwDestroyWindow(m_glfwWindow);
 		glfwTerminate();
 	}
@@ -32,9 +33,16 @@ namespace vkEngine
 			glfwSetInputMode(m_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 
-	void Window::createSurface(VkInstance instance, VkSurfaceKHR& surface)
+	void Window::createSurface(const Shared<Instance>& inst)
 	{
-		ENGINE_ASSERT(glfwCreateWindowSurface(instance, m_glfwWindow, nullptr, &surface) == VK_SUCCESS, "Window sufrace creation failed");
+		ENGINE_ASSERT(glfwCreateWindowSurface(inst->instance(), m_glfwWindow, nullptr, &m_Surface) == VK_SUCCESS, "Window sufrace creation failed");
+	}
+
+	void Window::destroySurface(const Shared<Instance>& inst)
+	{
+		ENGINE_ASSERT(m_Surface != VK_NULL_HANDLE, "Surface has not been created before attempting to destroy it");
+		vkDestroySurfaceKHR(inst->instance(), m_Surface, nullptr);
+		m_Surface = VK_NULL_HANDLE;
 	}
 
 	inline void Window::setWindowTitle(const char* title)
@@ -56,6 +64,4 @@ namespace vkEngine
 		glfwGetFramebufferSize(m_glfwWindow, &width, &height);
 		return { width, height };
 	}
-
-
 }
