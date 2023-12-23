@@ -17,8 +17,8 @@ const bool DEBUG_BUILD_CONFIGURATION = true;
 namespace vkEngine
 {
 	using QueueFamilyIndex = uint32_t;
-	
-	template<typename T>
+
+	template <typename T, typename Deleter = std::default_delete<T>>
 	using Shared = std::shared_ptr<T>;
 	template<typename T, typename ... Args>
 	constexpr Shared<T> CreateShared(Args&& ... args)
@@ -26,8 +26,8 @@ namespace vkEngine
 		return std::make_shared<T>(std::forward<Args>(args)...);
 	}
 
-	template<typename T>
-	using Scoped = std::unique_ptr<T>;
+	template <typename T, typename Deleter = std::default_delete<T>>
+	using Scoped = std::unique_ptr<T, Deleter>;
 	template<typename T, typename ... Args>
 	constexpr Scoped<T> CreateScoped(Args&& ... args)
 	{

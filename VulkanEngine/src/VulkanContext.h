@@ -6,39 +6,49 @@
 #include "Window/Window.h"
 #include "Devices/PhysicalDevice.h"
 #include "Devices/LogicalDevice.h"
+#include "Core.h"
 
 namespace vkEngine
 {
 	class Engine;
 	class Application;
 	class QueueHandler;
-	using QueueFamilyIndex = uint32_t;
+	struct VulkanContextDeleter;
 
+	using QueueFamilyIndex = uint32_t;
+	
 	class VulkanContext
 	{
-	public:
-		VulkanContext(const Engine& engine, const std::vector<const char*>& deviceExtensions);
-		~VulkanContext();
+		friend class Engine;
+		friend void vulkanContextDeleterFunc(VulkanContext* ptr);
+		using ScopedVulkanContext = Scoped<VulkanContext, decltype(&vulkanContextDeleterFunc)>;
 
-		inline const Shared<PhysicalDevice>& getPhysicalDevice() const { return m_PhysicalDevice; };
-		inline const Shared<QueueHandler>& getQueueHandler() const { return m_QueueHandler; }
-		inline const Shared<Swapchain>& getSwapchain() { return m_Swapchain; }
-		inline const Shared<LogicalDevice>& getLogicalDevice() const { return m_Device; };
-		inline VkDevice getDevice() const { return m_Device->logicalDevice(); }
+	public:
+		static inline const Shared<PhysicalDevice>& getPhysicalDevice() { return m_ContextInstance->m_PhysicalDevice; };
+		static inline const Shared<QueueHandler>& getQueueHandler() { return m_ContextInstance->m_QueueHandler; }
+		static inline const Shared<Swapchain>& getSwapchain() { return m_ContextInstance->m_Swapchain; }
+		static inline const Shared<LogicalDevice>& getLogicalDevice() { return m_ContextInstance->m_Device; };
+		static inline VkDevice getDevice() { return m_ContextInstance->m_Device->logicalDevice(); }
 
 		//TODO: Find the better place for functions
 		VkFormat findDepthFormat();
 		bool hasStencilComponent(VkFormat format);
 	private:
-		void cleanup();
+		~VulkanContext();
+		VulkanContext(const Engine& engine, const std::vector<const char*>& deviceExtensions);
 		void initialize(const std::vector<const char*>& deviceExtensions);
+
+		static void initializeInstance(const Engine& engine, const std::vector<const char*>& deviceExtensions);
+		static void destroyInstance();
+		void cleanup();
+
 	private:
+		static ScopedVulkanContext m_ContextInstance;
 		const Engine& m_Engine;
 		Shared<Swapchain> m_Swapchain = nullptr;
 		Shared<QueueHandler> m_QueueHandler = nullptr;
 		Shared<PhysicalDevice> m_PhysicalDevice = nullptr;
 		Shared<LogicalDevice> m_Device = nullptr;
-
 	private:
 		inline void initSwapchain();
 		inline void initQueueHandler();
@@ -46,4 +56,6 @@ namespace vkEngine
 		inline void initLogicalDevice(const std::vector<const char*>& deviceExtensions);
 
 	};
+
+
 }

@@ -46,7 +46,7 @@ namespace vkEngine
 	class QueueHandler
 	{
 	public:
-		QueueHandler(const VulkanContext& context);
+		QueueHandler(const Shared<LogicalDevice>& device, const Shared<PhysicalDevice>& physicalDevice);
 
 		void submitCommands(VkSubmitInfo submitInfo, VkFence fence = VK_NULL_HANDLE);
 		void waitForIdle();
@@ -63,8 +63,9 @@ namespace vkEngine
 		void initQueues();
 		void queryQueues();
 	private:
-		const VulkanContext& m_Context;
-		VkDevice m_Device;
+		const Shared<LogicalDevice>& m_DeviceRef;
+		const Shared<PhysicalDevice>& m_PhysicalDeviceRef;
+		
 		QueueFamilyIndices m_QueueIndices;
 		VkQueue m_GraphicsQueue;
 		VkQueue m_PresentQueue;

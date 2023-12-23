@@ -10,6 +10,10 @@ namespace vkEngine
 {
 	class Window;
 	class VulkanContext;
+	class LogicalDevice;
+	class QueueHandler;
+	class PhysicalDevice;
+
 	struct QueueFamilyIndices;
 
 	struct SwapChainSupportDetails
@@ -24,7 +28,7 @@ namespace vkEngine
 		friend Window;
 
 	public:
-		Swapchain(const Shared<Window>& window, VkSurfaceKHR surface, const VulkanContext& context, uint32_t maxFramesInFlight);
+		Swapchain(const Shared<Window>& window, VkSurfaceKHR surface, Shared<LogicalDevice>& device, Shared<PhysicalDevice>& physicalD, Shared<QueueHandler>& qHandler, uint32_t maxFramesInFlight);
 		Swapchain() = delete;
 
 		void resize(uint32_t newWidth, uint32_t newHeight);
@@ -49,10 +53,11 @@ namespace vkEngine
 		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 	private:
-		const VulkanContext& m_Context;
 		const Shared<Window>& m_Window;
+		const Shared<QueueHandler>& m_QueueHandlerRef;
+		const Shared<LogicalDevice>& m_DeviceRef;
+		const Shared<PhysicalDevice>& m_PhysicalDeviceRef;
 
-		VkDevice m_Device;
 		VkSurfaceKHR m_Surface;
 		VkSwapchainKHR m_Swapchain{ nullptr };
 		std::vector<VkSemaphore> m_ImageAvailableSemaphores{};

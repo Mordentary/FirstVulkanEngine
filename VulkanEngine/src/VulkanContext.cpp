@@ -6,6 +6,13 @@
 
 namespace vkEngine
 {
+	VulkanContext::ScopedVulkanContext VulkanContext::m_ContextInstance(nullptr, &vulkanContextDeleterFunc);
+
+	void vulkanContextDeleterFunc(VulkanContext* ptr)
+	{
+		delete ptr;
+	}
+
 	VulkanContext::VulkanContext(const Engine& engine, const std::vector<const char*>& deviceExtensions)
 		: m_Engine(engine)
 	{
@@ -15,6 +22,16 @@ namespace vkEngine
 	VulkanContext::~VulkanContext()
 	{
 		cleanup();
+	}
+
+	void VulkanContext::initializeInstance(const Engine& engine, const std::vector<const char*>& deviceExtensions)
+	{
+		m_ContextInstance = ScopedVulkanContext(new VulkanContext(engine, deviceExtensions), &vulkanContextDeleterFunc);
+	}
+
+	void VulkanContext::destroyInstance()
+	{
+		m_ContextInstance.reset();
 	}
 
 	void VulkanContext::initialize(const std::vector<const char*>& deviceExtensions)
@@ -31,14 +48,16 @@ namespace vkEngine
 			(
 				m_Engine.getApp()->getWindow(),
 				m_Engine.getApp()->getWindow()->getSurface(),
-				*this,
+				m_Device,
+				m_PhysicalDevice,
+				m_QueueHandler,
 				m_Engine.s_MaxFramesInFlight
 			);
 	}
 
 	void VulkanContext::initQueueHandler()
 	{
-		m_QueueHandler = CreateScoped<QueueHandler>(*this);
+		m_QueueHandler = CreateScoped<QueueHandler>(m_Device, m_PhysicalDevice);
 	}
 
 	inline void VulkanContext::initPhysicalDevice(const std::vector<const char*>& deviceExtensions)
@@ -68,5 +87,6 @@ namespace vkEngine
 	{
 		m_Swapchain->cleanupSwapchain();
 	}
+
 
 }

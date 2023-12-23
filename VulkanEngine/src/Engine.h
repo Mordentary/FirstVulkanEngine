@@ -7,6 +7,7 @@
 #include "TimeHelper.h"
 #include "VulkanContext.h"
 #include "Camera/Camera.h"
+#include <Image2D.h>
 
 namespace vkEngine
 {
@@ -95,13 +96,12 @@ namespace vkEngine
 
 	private:
 		const Application* m_App;
-		Shared<VulkanContext> m_Context;
 		Shared<Camera> m_Camera;
 		Shared<Instance> m_Instance;
 
 	private:
 		void initVulkan();
-
+		
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& abailableModes);
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
@@ -161,6 +161,10 @@ namespace vkEngine
 		VkBuffer m_IndexBuffer;
 		VkDeviceMemory m_IndexBufferMemory;
 
+
+		//Image2D m_Texture;
+		
+		//TODO: replace with Image2D class
 		VkSampler m_TextureSampler;
 		VkImageView m_TextureView;
 		VkImage m_Texture;

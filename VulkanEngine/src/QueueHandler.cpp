@@ -4,15 +4,16 @@
 
 namespace vkEngine
 {
-	QueueHandler::QueueHandler(const VulkanContext& context)
-		: m_Context(context), m_Device(context.getLogicalDevice()->logicalDevice())
+	QueueHandler::QueueHandler(const Shared<LogicalDevice>& device, const Shared<PhysicalDevice>& physicalDevice)
+		: m_DeviceRef(device),
+		 m_PhysicalDeviceRef(physicalDevice)
 	{
 		initQueues();
 	}
 
 	void QueueHandler::initQueues()
 	{
-		m_QueueIndices = m_Context.getPhysicalDevice()->getAvaibleQueueFamilies();
+		m_QueueIndices = m_PhysicalDeviceRef->getAvaibleQueueFamilies();
 		queryQueues();
 	}
 
@@ -30,11 +31,11 @@ namespace vkEngine
 	{
 		VkFence fence;
 		VkFenceCreateInfo fenceCreateInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-		vkCreateFence(m_Device, &fenceCreateInfo, nullptr, &fence);
+		vkCreateFence(m_DeviceRef->logicalDevice(), &fenceCreateInfo, nullptr, &fence);
 
 		vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, fence);
-		vkWaitForFences(m_Device, 1, &fence, VK_TRUE, UINT64_MAX);
-		vkDestroyFence(m_Device, fence, nullptr);
+		vkWaitForFences(m_DeviceRef->logicalDevice(), 1, &fence, VK_TRUE, UINT64_MAX);
+		vkDestroyFence(m_DeviceRef->logicalDevice(), fence, nullptr);
 	}
 
 	void QueueHandler::submitAndWaitIdle(VkSubmitInfo submitInfo)
@@ -48,7 +49,7 @@ namespace vkEngine
 		QueueFamilyIndex graphicsFamily = m_QueueIndices.graphicsFamily.value();
 		QueueFamilyIndex presentFamily = m_QueueIndices.presentFamily.value();
 
-		vkGetDeviceQueue(m_Device, graphicsFamily, 0, &m_GraphicsQueue);
-		vkGetDeviceQueue(m_Device, presentFamily, 0, &m_PresentQueue);
+		vkGetDeviceQueue(m_DeviceRef->logicalDevice(), graphicsFamily, 0, &m_GraphicsQueue);
+		vkGetDeviceQueue(m_DeviceRef->logicalDevice(), presentFamily, 0, &m_PresentQueue);
 	}
 }
