@@ -29,4 +29,5 @@
 // Engine Functionality
 #include "Core.h"
 #include "Logger/Logger.h"
+#include "Utility/VulkanUtils.h"
 #include "TimeHelper.h"

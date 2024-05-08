@@ -20,14 +20,14 @@ namespace vkEngine
 	}
 
 	void Image2D::cleanup() {
-		VkDevice device = VulkanContext::getLogicalDevice()->logicalDevice();
+		VkDevice device = VulkanContext::getDevice();
 		vkFreeMemory(device, m_ImageInfo.imageMemory, nullptr);
 		vkDestroyImageView(device, m_ImageInfo.imageView, nullptr);
 		vkDestroyImage(device, m_Image, nullptr);
 	}
 
 	void Image2D::createImage(VkMemoryPropertyFlags properties) {
-		VkDevice device = VulkanContext::getLogicalDevice()->logicalDevice();
+		VkDevice device = VulkanContext::getDevice();
 		VkImageCreateInfo imageInfo = {};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -59,7 +59,7 @@ namespace vkEngine
 	}
 
 	void Image2D::createImageView() {
-		VkDevice device = VulkanContext::getLogicalDevice()->logicalDevice();
+		VkDevice device = VulkanContext::getDevice();
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = m_Image;

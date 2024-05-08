@@ -116,15 +116,10 @@ namespace vkEngine
 
 		void initRenderPass();
 
-		void initCommandPool();
-		void initCommandBuffer();
-
-
 		void initImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 		VkImageView createImageView(VkImage image, VkFormat format);
-		//void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-		//void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
+		
 		void initBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -138,8 +133,6 @@ namespace vkEngine
 		void initDepthResources();
 
 		void updateUniformBuffer(uint32_t currentFrame, Timestep deltaTime);
-
-		//uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
@@ -159,9 +152,8 @@ namespace vkEngine
 		VkBuffer m_IndexBuffer;
 		VkDeviceMemory m_IndexBufferMemory;
 
-
 		Shared<Image2D> m_TextureTest{ nullptr};
-
+		
 		//TODO: replace with Image2D class
 		VkSampler m_TextureSampler;
 		VkImageView m_TextureView;
@@ -175,9 +167,6 @@ namespace vkEngine
 		std::vector<VkBuffer>  m_UniformBuffers{};
 		std::vector<VkDeviceMemory> m_UniformBuffersMemory{};
 		std::vector<void*> m_UniformBuffersMapped{};
-
-		VkCommandPool m_CommandPool;
-		std::vector<VkCommandBuffer> m_CommandBuffers{};
 
 		std::vector<VkSemaphore> m_RenderFinishedSemaphores{};
 		std::vector<VkFence> m_InFlightFences{};

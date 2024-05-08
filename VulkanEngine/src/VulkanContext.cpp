@@ -41,6 +41,13 @@ namespace vkEngine
 		initLogicalDevice(deviceExtensions);
 		initQueueHandler();
 		initSwapchain();
+		initCommandBufferHandler();
+
+	}
+
+	inline void VulkanContext::initCommandBufferHandler()
+	{
+		m_CommandHandler = CreateShared<CommandBufferHandler>(m_Device->logicalDevice(), m_QueueHandler->getQueueFamilyIndices().graphicsFamily.value());
 	}
 
 	void VulkanContext::initSwapchain()
@@ -87,6 +94,7 @@ namespace vkEngine
 	void VulkanContext::cleanup()
 	{
 		m_Swapchain->cleanupSwapchain();
+		m_CommandHandler.reset();
 	}
 
 
