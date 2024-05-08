@@ -6,11 +6,16 @@
 
 namespace vkEngine
 {
-	VulkanContext::ScopedVulkanContext VulkanContext::m_ContextInstance(nullptr, &vulkanContextDeleterFunc);
+	VulkanContext::ScopedVulkanContext VulkanContext::m_ContextInstance(nullptr, &VulkanContext::vulkanContextDeleterFunc);
 
-	void vulkanContextDeleterFunc(VulkanContext* ptr)
+	void VulkanContext::vulkanContextDeleterFunc(VulkanContext* ptr)
 	{
 		delete ptr;
+	}
+
+	void VulkanContext::initializeInstance(const Engine& engine, const std::vector<const char*>& deviceExtensions)
+	{
+		m_ContextInstance = ScopedVulkanContext(new VulkanContext(engine, deviceExtensions), &vulkanContextDeleterFunc);
 	}
 
 	VulkanContext::VulkanContext(const Engine& engine, const std::vector<const char*>& deviceExtensions)
@@ -24,10 +29,6 @@ namespace vkEngine
 		cleanup();
 	}
 
-	void VulkanContext::initializeInstance(const Engine& engine, const std::vector<const char*>& deviceExtensions)
-	{
-		m_ContextInstance = ScopedVulkanContext(new VulkanContext(engine, deviceExtensions), &vulkanContextDeleterFunc);
-	}
 
 	void VulkanContext::destroyInstance()
 	{

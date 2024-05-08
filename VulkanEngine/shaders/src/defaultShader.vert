@@ -7,8 +7,6 @@ layout(location = 2) in vec2 a_TextureCoord;
 layout(location = 0) out vec3 v_VertColor;
 layout(location = 1) out vec2 v_TextureCoord;
 
-
-
 layout(binding = 0) uniform UniformBufferObject {
     mat4 model;
     mat4 view;

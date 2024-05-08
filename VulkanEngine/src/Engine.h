@@ -7,7 +7,7 @@
 #include "TimeHelper.h"
 #include "VulkanContext.h"
 #include "Camera/Camera.h"
-#include <Image2D.h>
+#include "Images/Image2D.h"
 
 namespace vkEngine
 {
@@ -119,13 +119,11 @@ namespace vkEngine
 		void initCommandPool();
 		void initCommandBuffer();
 
-		VkCommandBuffer beginSingleTimeCommands();
-		void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
 		void initImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 		VkImageView createImageView(VkImage image, VkFormat format);
-		void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+		//void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+		//void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 		void initBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
@@ -141,7 +139,7 @@ namespace vkEngine
 
 		void updateUniformBuffer(uint32_t currentFrame, Timestep deltaTime);
 
-		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+		//uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
@@ -162,8 +160,8 @@ namespace vkEngine
 		VkDeviceMemory m_IndexBufferMemory;
 
 
-		//Image2D m_Texture;
-		
+		Shared<Image2D> m_TextureTest{ nullptr};
+
 		//TODO: replace with Image2D class
 		VkSampler m_TextureSampler;
 		VkImageView m_TextureView;

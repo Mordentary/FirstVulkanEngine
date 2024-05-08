@@ -8,20 +8,20 @@
 #include "Devices/LogicalDevice.h"
 #include "Core.h"
 
+
 namespace vkEngine
 {
 	class Engine;
 	class Application;
 	class QueueHandler;
-	struct VulkanContextDeleter;
 
 	using QueueFamilyIndex = uint32_t;
-	
+
+
 	class VulkanContext
 	{
 		friend class Engine;
-		friend void vulkanContextDeleterFunc(VulkanContext* ptr);
-		using ScopedVulkanContext = Scoped<VulkanContext, decltype(&vulkanContextDeleterFunc)>;
+		
 
 	public:
 		static inline const Shared<PhysicalDevice>& getPhysicalDevice() { return m_ContextInstance->m_PhysicalDevice; };
@@ -33,6 +33,9 @@ namespace vkEngine
 		//TODO: Find the better place for functions
 		VkFormat findDepthFormat();
 		bool hasStencilComponent(VkFormat format);
+	private:
+		static inline void vulkanContextDeleterFunc(VulkanContext* ptr);
+		using ScopedVulkanContext = Scoped<VulkanContext, decltype(&vulkanContextDeleterFunc)>;
 	private:
 		~VulkanContext();
 		VulkanContext(const Engine& engine, const std::vector<const char*>& deviceExtensions);
