@@ -5,48 +5,13 @@
 #include <glm/glm.hpp>
 
 #include "TimeHelper.h"
-#include "VulkanContext.h"
 #include "Camera/Camera.h"
 #include "Images/Image2D.h"
+#include "Buffers/Buffer.h"
+#include "Buffers/UniformBuffer.h"
 
 namespace vkEngine
 {
-	struct Vertex
-	{
-		glm::vec3 position;
-		glm::vec3 color;
-		glm::vec2 textureCoord;
-		static VkVertexInputBindingDescription getBindingDescription()
-		{
-			VkVertexInputBindingDescription bindingDescription{};
-			bindingDescription.binding = 0;
-			bindingDescription.stride = sizeof(Vertex);
-			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-			return bindingDescription;
-		}
-		static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions()
-		{
-			std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
-
-			attributeDescriptions[0].binding = 0;
-			attributeDescriptions[0].location = 0;
-			attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-			attributeDescriptions[0].offset = offsetof(Vertex, position);
-
-			attributeDescriptions[1].binding = 0;
-			attributeDescriptions[1].location = 1;
-			attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-			attributeDescriptions[1].offset = offsetof(Vertex, color);
-
-			attributeDescriptions[2].binding = 0;
-			attributeDescriptions[2].location = 2;
-			attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-			attributeDescriptions[2].offset = offsetof(Vertex, textureCoord);
-
-			return attributeDescriptions;
-		}
-	};
 
 	const std::vector<Vertex> vertices = {
 		{{-0.5f, -0.5f, 0.f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
@@ -146,14 +111,13 @@ namespace vkEngine
 		VkPipeline m_GraphicsPipeline;
 		VkPipelineLayout m_PipelineLayout{ VK_NULL_HANDLE };
 
-		VkBuffer m_VertexBuffer;
-		VkDeviceMemory m_VertexBufferMemory;
-
-		VkBuffer m_IndexBuffer;
-		VkDeviceMemory m_IndexBufferMemory;
-
 		Shared<Image2D> m_TextureTest{ nullptr};
-		
+		Scoped<VertexBuffer> m_VertexBuffer{ nullptr };
+		Scoped<IndexBuffer> m_IndexBuffer{ nullptr };
+
+		std::vector<Shared<UniformBuffer>> m_UniformBuffers{};
+
+
 		//TODO: replace with Image2D class
 		VkSampler m_TextureSampler;
 		VkImageView m_TextureView;
@@ -164,9 +128,10 @@ namespace vkEngine
 		VkDeviceMemory m_DepthImageMemory;
 		VkImageView m_DepthImageView;
 
-		std::vector<VkBuffer>  m_UniformBuffers{};
-		std::vector<VkDeviceMemory> m_UniformBuffersMemory{};
-		std::vector<void*> m_UniformBuffersMapped{};
+
+		//std::vector<VkBuffer>  m_UniformBuffers{};
+		//std::vector<VkDeviceMemory> m_UniformBuffersMemory{};
+		//std::vector<void*> m_UniformBuffersMapped{};
 
 		std::vector<VkSemaphore> m_RenderFinishedSemaphores{};
 		std::vector<VkFence> m_InFlightFences{};

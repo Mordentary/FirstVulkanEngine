@@ -7,6 +7,7 @@
 #include "Images/Image2D.h"
 #include "Utility/VulkanUtils.h"
 
+
 namespace vkEngine
 {
 	static uint32_t nextRenderFrame = 0;
@@ -68,7 +69,6 @@ namespace vkEngine
 		VulkanContext::getCommandHandler()->allocateCommandBuffers(s_MaxFramesInFlight);
 
 		//m_TextureTest = CreateShared<Image2D>("assets/textures/statue.jpg");
-
 		initTextureImage();
 		initTextureImageView();
 		initTextureSampler();
@@ -76,6 +76,7 @@ namespace vkEngine
 		initVertexBuffer();
 		initIndexBuffer();
 		initUniformBuffer();
+
 		initDescriptorPool();
 		initDescriptorSets();
 		initSyncObjects();
@@ -146,18 +147,16 @@ namespace vkEngine
 
 		for (size_t i = 0; i < s_MaxFramesInFlight; i++)
 		{
-			vkDestroyBuffer(device, m_UniformBuffers[i], nullptr);
-			vkFreeMemory(device, m_UniformBuffersMemory[i], nullptr);
+			m_UniformBuffers[i].reset();
 		}
 
 		vkDestroyDescriptorPool(device, m_DesciptorPool, nullptr);
 		vkDestroyDescriptorSetLayout(device, m_DescriptorSetLayout, nullptr);
 
-		vkDestroyBuffer(device, m_IndexBuffer, nullptr);
-		vkFreeMemory(device, m_IndexBufferMemory, nullptr);
 
-		vkDestroyBuffer(device, m_VertexBuffer, nullptr);
-		vkFreeMemory(device, m_VertexBufferMemory, nullptr);
+		m_IndexBuffer.reset();
+		m_VertexBuffer.reset();
+
 
 		vkDestroyPipeline(device, m_GraphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr);
@@ -282,7 +281,7 @@ namespace vkEngine
 		for (size_t i = 0; i < s_MaxFramesInFlight; i++)
 		{
 			VkDescriptorBufferInfo bufferInfo{};
-			bufferInfo.buffer = m_UniformBuffers[i];
+			bufferInfo.buffer = m_UniformBuffers[i]->getBuffer();
 			bufferInfo.offset = 0;
 			bufferInfo.range = VK_WHOLE_SIZE;
 
@@ -318,21 +317,10 @@ namespace vkEngine
 		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
 		m_UniformBuffers.resize(s_MaxFramesInFlight);
-		m_UniformBuffersMemory.resize(s_MaxFramesInFlight);
-		m_UniformBuffersMapped.resize(s_MaxFramesInFlight);
-
 		for (size_t i = 0; i < s_MaxFramesInFlight; i++)
 		{
-			initBuffer
-			(
-				bufferSize,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				m_UniformBuffers[i],
-				m_UniformBuffersMemory[i]
-			);
-
-			vkMapMemory(VulkanContext::getDevice(), m_UniformBuffersMemory[i], 0, bufferSize, 0, &m_UniformBuffersMapped[i]);
+			m_UniformBuffers[i] = CreateShared<UniformBuffer>(bufferSize);
+			m_UniformBuffers[i]->mapMemory();
 		}
 	}
 
@@ -451,14 +439,6 @@ namespace vkEngine
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 
-		//initImage(
-		//	texWidth, texHeight, format,
-		//	VK_IMAGE_TILING_OPTIMAL,
-		//	VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		//	VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		//	m_Texture, m_TextureMemory);
-
-
 		VkCommandBuffer cmdBuffer = VulkanContext::getCommandHandler()->beginSingleTimeCommands();
 
 		m_TextureTest->transitionImageLayout(cmdBuffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -473,38 +453,6 @@ namespace vkEngine
 		vkFreeMemory(VulkanContext::getDevice(), stagingBufferMemory, nullptr);
 	}
 
-	//void Engine::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
-	//{
-	//	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-
-	//	VkBufferImageCopy region{};
-	//	region.bufferOffset = 0;
-	//	region.bufferRowLength = 0;
-	//	region.bufferImageHeight = 0;
-
-	//	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	//	region.imageSubresource.mipLevel = 0;
-	//	region.imageSubresource.baseArrayLayer = 0;
-	//	region.imageSubresource.layerCount = 1;
-
-	//	region.imageOffset = { 0, 0, 0 };
-	//	region.imageExtent = {
-	//		width,
-	//		height,
-	//		1
-	//	};
-
-	//	vkCmdCopyBufferToImage(
-	//		commandBuffer,
-	//		buffer,
-	//		image,
-	//		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	//		1,
-	//		&region
-	//	);
-
-	//	VulkanContext::getCommandHandler()->endSingleTimeCommands(commandBuffer);
-	//}
 
 	void Engine::initImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
 	{
@@ -542,12 +490,15 @@ namespace vkEngine
 	{
 		UniformBufferObject ubo{};
 
-		ubo.modelMat = glm::mat4(1.0f); // glm::rotate(glm::mat4(1.0f), cos(CurrentTime::GetCurrentTimeInSec()) * glm::radians(60.0f) * 10.f, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		float time = CurrentTime::GetCurrentTimeInSec();
+		ubo.modelMat =   glm::rotate(glm::mat4(1.0f), glm::cos(time), glm::vec3(0.65,0.52,0.52)); // glm::rotate(glm::mat4(1.0f), cos(CurrentTime::GetCurrentTimeInSec()) * glm::radians(60.0f) * 10.f, glm::vec3(0.0f, 1.0f, 0.0f));
+
 		ubo.viewMat = m_Camera->GetViewMatrix();
 		ubo.projMat = m_Camera->GetProjectionMatrix();
 		ubo.projMat[1][1] *= -1;
 
-		memcpy(m_UniformBuffersMapped[currentFrame], &ubo, sizeof(ubo));
+		memcpy(m_UniformBuffers[currentFrame]->getMappedMemory(), &ubo, sizeof(ubo));
 	}
 
 	void Engine::initGraphicsPipeline()
@@ -793,44 +744,12 @@ namespace vkEngine
 
 	void Engine::initVertexBuffer()
 	{
-		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		initBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-		void* data;
-		vkMapMemory(VulkanContext::getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, vertices.data(), (size_t)bufferSize);
-		vkUnmapMemory(VulkanContext::getDevice(), stagingBufferMemory);
-
-		initBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBuffer, m_VertexBufferMemory);
-
-		copyBuffer(stagingBuffer, m_VertexBuffer, bufferSize);
-
-		vkDestroyBuffer(VulkanContext::getDevice(), stagingBuffer, nullptr);
-		vkFreeMemory(VulkanContext::getDevice(), stagingBufferMemory, nullptr);
+		m_VertexBuffer = CreateScoped<VertexBuffer>(vertices);
 	}
 
 	void Engine::initIndexBuffer()
 	{
-		VkDeviceSize bufferSize = sizeof(uint16_t) * indices.size();
-
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		initBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-		void* data;
-		vkMapMemory(VulkanContext::getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, indices.data(), (size_t)bufferSize);
-		vkUnmapMemory(VulkanContext::getDevice(), stagingBufferMemory);
-
-		initBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_IndexBuffer, m_IndexBufferMemory);
-
-		copyBuffer(stagingBuffer, m_IndexBuffer, bufferSize);
-
-		vkDestroyBuffer(VulkanContext::getDevice(), stagingBuffer, nullptr);
-		vkFreeMemory(VulkanContext::getDevice(), stagingBufferMemory, nullptr);
+		m_IndexBuffer = CreateScoped<IndexBuffer>(indices);
 	}
 
 	void Engine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
@@ -875,11 +794,11 @@ namespace vkEngine
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline); // Second parameter is about pipeline how it will be used
 
-		VkBuffer vertexBuffers[] = { m_VertexBuffer };
+		VkBuffer vertexBuffers[] = { m_VertexBuffer->getBuffer() };
 		VkDeviceSize offsets[] = { 0 };
 
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;

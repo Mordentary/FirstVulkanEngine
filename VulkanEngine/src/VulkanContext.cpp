@@ -42,7 +42,6 @@ namespace vkEngine
 		initQueueHandler();
 		initSwapchain();
 		initCommandBufferHandler();
-
 	}
 
 	inline void VulkanContext::initCommandBufferHandler()
@@ -96,6 +95,5 @@ namespace vkEngine
 		m_Swapchain->cleanupSwapchain();
 		m_CommandHandler.reset();
 	}
-
 
 }
