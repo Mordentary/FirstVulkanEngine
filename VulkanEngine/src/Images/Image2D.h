@@ -36,8 +36,10 @@ namespace vkEngine
 		// Getters
 		VkImage getImage() const { return m_Image; }
 		VkImageView getImageView() const { return m_ImageInfo.imageView; }
+		VkExtent2D getExtent() const { return m_ImageInfo.extent; }
 
 	private:
+
 		VkDevice m_Device;
 		VkImage m_Image;
 		Image2DInfo m_ImageInfo;

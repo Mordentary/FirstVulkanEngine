@@ -6,9 +6,9 @@
 
 #include "TimeHelper.h"
 #include "Camera/Camera.h"
-#include "Images/Image2D.h"
 #include "Buffers/Buffer.h"
 #include "Buffers/UniformBuffer.h"
+#include "Images/Texture2D.h"
 
 namespace vkEngine
 {
@@ -58,6 +58,10 @@ namespace vkEngine
 		void init();
 		void initInstance();
 
+		//void updateTextureDescriptor(Timestep deltaTime);
+		//std::vector<Shared<Texture2D>> m_Textures;
+		//float m_TextureSwitchTimer = 0.0f;
+		//uint32_t m_CurrentTextureIndex = 0;
 
 	private:
 		const Application* m_App;
@@ -66,10 +70,7 @@ namespace vkEngine
 
 	private:
 		void initVulkan();
-		
-		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& abailableModes);
-		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
 
 		void initDescriptorsSetLayout();
 		void initDescriptorPool();
@@ -81,10 +82,9 @@ namespace vkEngine
 
 		void initRenderPass();
 
-		void initImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-		VkImageView createImageView(VkImage image, VkFormat format);
+		//void initImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+		//VkImageView createImageView(VkImage image, VkFormat format);
 
-		
 		void initBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -92,8 +92,8 @@ namespace vkEngine
 		void initIndexBuffer();
 		void initUniformBuffer();
 		void initTextureImage();
-		void initTextureImageView();
-		void initTextureSampler();
+		//void initTextureImageView();
+		//void initTextureSampler();
 
 		void initDepthResources();
 
@@ -111,7 +111,10 @@ namespace vkEngine
 		VkPipeline m_GraphicsPipeline;
 		VkPipelineLayout m_PipelineLayout{ VK_NULL_HANDLE };
 
-		Shared<Image2D> m_TextureTest{ nullptr};
+
+		Shared<Texture2D> m_TextureTest2{ nullptr };
+		//Shared<Texture2D> m_TextureTest2{ nullptr };
+	
 		Scoped<VertexBuffer> m_VertexBuffer{ nullptr };
 		Scoped<IndexBuffer> m_IndexBuffer{ nullptr };
 
@@ -119,10 +122,10 @@ namespace vkEngine
 
 
 		//TODO: replace with Image2D class
-		VkSampler m_TextureSampler;
-		VkImageView m_TextureView;
-		VkImage m_Texture;
-		VkDeviceMemory m_TextureMemory;
+		//VkSampler m_TextureSampler;
+		//VkImageView m_TextureView;
+		//VkImage m_Texture;
+		//VkDeviceMemory m_TextureMemory;
 
 		VkImage m_DepthImage;
 		VkDeviceMemory m_DepthImageMemory;
