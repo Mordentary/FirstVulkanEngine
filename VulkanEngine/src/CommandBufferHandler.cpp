@@ -12,7 +12,7 @@ namespace vkEngine {
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		poolInfo.queueFamilyIndex = queueFamilyIndex;
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		
+
 		ENGINE_ASSERT(vkCreateCommandPool(m_Device, &poolInfo, nullptr, &m_CommandPool) == VK_SUCCESS,
 			"Failed to create command pool!");
 	}
@@ -86,7 +86,7 @@ namespace vkEngine {
 	}
 
 	void CommandBufferHandler::freeCommandBuffers() {
-		if (!m_CommandBuffers.empty()) 
+		if (!m_CommandBuffers.empty())
 		{
 			vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
 			m_CommandBuffers.clear();
@@ -124,7 +124,9 @@ namespace vkEngine {
 	{
 		ENGINE_ASSERT(index < m_CommandBuffers.size(), "Command buffer index out of range!");
 
-		VkSubmitInfo submitInfo{};
+
+
+			VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &m_CommandBuffers[index];

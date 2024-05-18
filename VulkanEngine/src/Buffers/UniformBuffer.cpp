@@ -47,7 +47,7 @@ namespace vkEngine
 	void* UniformBuffer::getMappedMemory()
 	{
 		ENGINE_ASSERT(m_MappedMemoryPtr, "Mapped memory - nullptr: Uniform buffer")
-		return m_MappedMemoryPtr;
+			return m_MappedMemoryPtr;
 	}
 
 }

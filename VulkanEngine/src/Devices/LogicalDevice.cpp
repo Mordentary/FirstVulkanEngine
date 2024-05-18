@@ -6,9 +6,9 @@
 namespace vkEngine
 {
 	LogicalDevice::LogicalDevice(const Shared<PhysicalDevice>& device, const Shared<Instance>& inst, const std::vector<const char*>& deviceExtensions)
-		: m_PhysicalDeviceRef(device),
+		: m_PhysicalDevice(device),
 		m_DeviceExtensions(deviceExtensions),
-		m_InstanceRef(inst)
+		m_Instance(inst)
 	{
 		initLogicalDevice();
 	}
@@ -20,9 +20,9 @@ namespace vkEngine
 
 	void LogicalDevice::initLogicalDevice()
 	{
-		QueueFamilyIndices indices = m_PhysicalDeviceRef->getAvaibleQueueFamilies();
+		QueueFamilyIndices indices = m_PhysicalDevice->getAvaibleQueueFamilies();
 
-		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
 		queueCreateInfos.reserve(indices.uniqueQueueFamilyCount());
 
 		std::unordered_set<QueueFamilyIndex> uniqueIndices = indices.uniqueQueueFamilies();
@@ -37,7 +37,7 @@ namespace vkEngine
 			queueCreateInfos.push_back(queueCreateInfo);
 		}
 
-		VkPhysicalDeviceFeatures deviceFeatures = m_PhysicalDeviceRef->getFeatures();
+		VkPhysicalDeviceFeatures deviceFeatures = m_PhysicalDevice->getFeatures();
 
 		VkDeviceCreateInfo deviceInfo{};
 		deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -47,9 +47,9 @@ namespace vkEngine
 
 		//Specify validation layers for older version of vulkan where is still the case (Previosly vulkan differ these two settings)
 		std::vector<const char*> validationLayers{};
-		if (m_InstanceRef->isValidationLayersEnabled())
+		if (m_Instance->isValidationLayersEnabled())
 		{
-			validationLayers = m_InstanceRef->getActivatedValidationLayers();
+			validationLayers = m_Instance->getActivatedValidationLayers();
 			deviceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			deviceInfo.ppEnabledLayerNames = validationLayers.data();
 		}
@@ -60,7 +60,7 @@ namespace vkEngine
 		deviceInfo.enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtensions.size());
 		deviceInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
 
-		ENGINE_ASSERT(vkCreateDevice(m_PhysicalDeviceRef->physicalDevice(), &deviceInfo, nullptr, &m_Device) == VK_SUCCESS, "Device creation failed");
+		ENGINE_ASSERT(vkCreateDevice(m_PhysicalDevice->physicalDevice(), &deviceInfo, nullptr, &m_Device) == VK_SUCCESS, "Device creation failed");
 	}
 
 	void LogicalDevice::cleanup()

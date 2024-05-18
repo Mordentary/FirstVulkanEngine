@@ -8,16 +8,22 @@
 namespace vkEngine
 {
 	Swapchain::Swapchain(const Shared<Window>& window, VkSurfaceKHR surface, Shared<LogicalDevice>& device, Shared<PhysicalDevice>& phyDevice, Shared<QueueHandler>& qHandler, uint32_t maxFramesInFlight)
-		: m_Window(window),
+		:
+		m_Device(device),
+		m_Window(window),
 		m_Surface(surface),
-		m_DeviceRef(device),
-		m_PhysicalDeviceRef(phyDevice),
-		m_QueueHandlerRef(qHandler),
+		m_PhysicalDevice(phyDevice),
+		m_QueueHandler(qHandler),
 		m_MaxFramesInFlight(maxFramesInFlight)
 	{
 		initSwapchain();
 		initImageViews();
 		initSemaphores();
+	}
+
+
+	Swapchain::~Swapchain() {
+		cleanupSwapchain();
 	}
 
 	void Swapchain::initImageViews()
@@ -39,7 +45,7 @@ namespace vkEngine
 			viewInfo.subresourceRange.baseArrayLayer = 0;
 			viewInfo.subresourceRange.layerCount = 1;
 
-			ENGINE_ASSERT(vkCreateImageView(m_DeviceRef->logicalDevice(), &viewInfo, nullptr, &m_SwapchainImageViews[i]) == VK_SUCCESS, "ImageView creation failed");
+			ENGINE_ASSERT(vkCreateImageView(m_Device->logicalDevice(), &viewInfo, nullptr, &m_SwapchainImageViews[i]) == VK_SUCCESS, "ImageView creation failed");
 		}
 	}
 
@@ -54,29 +60,33 @@ namespace vkEngine
 			m_Window->waitEvents();
 		}
 
-		vkDeviceWaitIdle(m_DeviceRef->logicalDevice());
 
 		cleanupSwapchain();
 
 		initSwapchain();
 		initImageViews();
 		initFramebuffers(renderpass);
+		initSemaphores();
 	}
 
 	void Swapchain::cleanupSwapchain()
 	{
 		for (size_t i = 0; i < m_SwapchainFramebuffers.size(); i++)
 		{
-			vkDestroyFramebuffer(m_DeviceRef->logicalDevice(), m_SwapchainFramebuffers[i], nullptr);
+			vkDestroyFramebuffer(m_Device->logicalDevice(), m_SwapchainFramebuffers[i], nullptr);
 		}
 
 		for (size_t i = 0; i < m_SwapchainImageViews.size(); i++)
 		{
-			vkDestroyImageView(m_DeviceRef->logicalDevice(), m_SwapchainImageViews[i], nullptr);
-			vkDestroySemaphore(m_DeviceRef->logicalDevice(), m_ImageAvailableSemaphores[i], nullptr);
+			vkDestroyImageView(m_Device->logicalDevice(), m_SwapchainImageViews[i], nullptr);
+			vkDestroySemaphore(m_Device->logicalDevice(), m_ImageAvailableSemaphores[i], nullptr);
 		}
 
-		vkDestroySwapchainKHR(m_DeviceRef->logicalDevice(), m_Swapchain, nullptr);
+		vkDestroySwapchainKHR(m_Device->logicalDevice(), m_Swapchain, nullptr);
+
+		m_SwapchainFramebuffers.clear();
+		m_SwapchainImageViews.clear();
+		m_ImageAvailableSemaphores.clear();
 	}
 
 	void Swapchain::initFramebuffers(VkRenderPass renderpass)
@@ -99,7 +109,7 @@ namespace vkEngine
 			framebufferInfo.height = m_SwapchainExtent.height;
 			framebufferInfo.layers = 1;
 
-			ENGINE_ASSERT(vkCreateFramebuffer(m_DeviceRef->logicalDevice(), &framebufferInfo, nullptr, &m_SwapchainFramebuffers[i]) == VK_SUCCESS, "Framebuffer creation failed");
+			ENGINE_ASSERT(vkCreateFramebuffer(m_Device->logicalDevice(), &framebufferInfo, nullptr, &m_SwapchainFramebuffers[i]) == VK_SUCCESS, "Framebuffer creation failed");
 		}
 	}
 	void Swapchain::initSemaphores()
@@ -113,7 +123,7 @@ namespace vkEngine
 		{
 			ENGINE_ASSERT
 			(
-				vkCreateSemaphore(m_DeviceRef->logicalDevice(), &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]) == VK_SUCCESS, "Semaphore creation failed"
+				vkCreateSemaphore(m_Device->logicalDevice(), &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]) == VK_SUCCESS, "Semaphore creation failed"
 			);
 		}
 	}
@@ -166,7 +176,7 @@ namespace vkEngine
 
 	void Swapchain::initSwapchain()
 	{
-		SwapChainSupportDetails swapChainSupport = m_PhysicalDeviceRef->querySwapChainSupport();
+		SwapChainSupportDetails swapChainSupport = m_PhysicalDevice->querySwapChainSupport();
 
 		VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
 		VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
@@ -192,7 +202,7 @@ namespace vkEngine
 		swapchainCreateInfo.imageArrayLayers = 1;
 		swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		QueueFamilyIndices indices = m_QueueHandlerRef->getQueueFamilyIndices();
+		QueueFamilyIndices indices = m_QueueHandler->getQueueFamilyIndices();
 		uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
 		if (indices.graphicsFamily != indices.presentFamily)
@@ -214,11 +224,11 @@ namespace vkEngine
 		swapchainCreateInfo.clipped = VK_TRUE;
 		swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-		ENGINE_ASSERT(vkCreateSwapchainKHR(m_DeviceRef->logicalDevice(), &swapchainCreateInfo, nullptr, &m_Swapchain) == VK_SUCCESS, "Swapchain creation failed");
+		ENGINE_ASSERT(vkCreateSwapchainKHR(m_Device->logicalDevice(), &swapchainCreateInfo, nullptr, &m_Swapchain) == VK_SUCCESS, "Swapchain creation failed");
 
-		vkGetSwapchainImagesKHR(m_DeviceRef->logicalDevice(), m_Swapchain, &imageCount, nullptr);
+		vkGetSwapchainImagesKHR(m_Device->logicalDevice(), m_Swapchain, &imageCount, nullptr);
 		m_SwapchainImages.resize(imageCount);
-		vkGetSwapchainImagesKHR(m_DeviceRef->logicalDevice(), m_Swapchain, &imageCount, m_SwapchainImages.data());
+		vkGetSwapchainImagesKHR(m_Device->logicalDevice(), m_Swapchain, &imageCount, m_SwapchainImages.data());
 	}
 
 	void Swapchain::resize(uint32_t newWidth, uint32_t newHeight)
@@ -227,7 +237,7 @@ namespace vkEngine
 
 	VkResult Swapchain::acquireNextImage(uint32_t frame)
 	{
-		return vkAcquireNextImageKHR(m_DeviceRef->logicalDevice(), m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[frame], VK_NULL_HANDLE, &m_ImageIndex);
+		return vkAcquireNextImageKHR(m_Device->logicalDevice(), m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[frame], VK_NULL_HANDLE, &m_ImageIndex);
 	}
 
 	void Swapchain::present(VkSemaphore* signalSemaphores, uint32_t count)
@@ -244,6 +254,6 @@ namespace vkEngine
 		presentInfo.pImageIndices = &m_ImageIndex;
 		presentInfo.pResults = nullptr; // Optional
 
-		vkQueuePresentKHR(m_QueueHandlerRef->getPresentQueue(), &presentInfo);
+		vkQueuePresentKHR(m_QueueHandler->getPresentQueue(), &presentInfo);
 	}
 }

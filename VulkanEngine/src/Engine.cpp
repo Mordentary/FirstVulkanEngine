@@ -8,11 +8,13 @@
 
 namespace vkEngine
 {
-	static uint32_t nextRenderFrame = 0;
+
 	const std::vector<const char*> deviceExtensions =
 	{
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
+
+	static uint32_t currentFrame = 0;
 
 	const int WINDOW_STARTUP_HEIGHT = 1000, WINDOW_STARTUP_WIDTH = 1000;
 	const std::string APP_NAME = "VulkanEngine";
@@ -48,45 +50,14 @@ namespace vkEngine
 	void Engine::init()
 	{
 		VulkanContext::initializeInstance(*this, deviceExtensions);
-		m_Camera = CreateShared<Camera>(glm::vec3{ 0.f, 0.5f, -1.f }, glm::vec3{ 0.f }, m_App->getWindow());
 		initVulkan();
+		m_Camera = CreateScoped<Camera>(glm::vec3{ 0.f, 0.5f, -1.f }, glm::vec3{ 0.f }, m_App->getWindow());
 	}
 
 	void Engine::initInstance()
 	{
 		m_Instance = CreateShared<Instance>(m_App->getAppName(), m_App->getValidationLayers(), m_App->isValidationLayersEnabled());
 	}
-
-	//void Engine::updateTextureDescriptor(Timestep deltaTime)
-	//{
-	//	m_TextureSwitchTimer += deltaTime.GetSeconds();
-
-	//	if (m_TextureSwitchTimer >= 5.0f)
-	//	{
-	//		m_CurrentTextureIndex = (m_CurrentTextureIndex + 1) % m_Textures.size();
-
-	//		VkDescriptorImageInfo imageInfo{};
-	//		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	//		imageInfo.imageView = m_Textures[m_CurrentTextureIndex]->getImageView();
-	//		imageInfo.sampler = m_Textures[m_CurrentTextureIndex]->getSampler();
-
-	//		for (size_t i = 0; i < m_DescriptorSets.size(); i++)
-	//		{
-	//			VkWriteDescriptorSet descriptorWrite{};
-	//			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	//			descriptorWrite.dstSet = m_DescriptorSets[i];
-	//			descriptorWrite.dstBinding = 1; // Assumes texture is bound to binding 1
-	//			descriptorWrite.dstArrayElement = 0;
-	//			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//			descriptorWrite.descriptorCount = 1;
-	//			descriptorWrite.pImageInfo = &imageInfo;
-
-	//			vkUpdateDescriptorSets(VulkanContext::getDevice(), 1, &descriptorWrite, 0, nullptr);
-	//		}
-
-	//		m_TextureSwitchTimer = 0.0f;
-	//	}
-	//}
 
 	void vkEngine::Engine::initVulkan()
 	{
@@ -96,9 +67,7 @@ namespace vkEngine
 		VulkanContext::getSwapchain()->initFramebuffers(m_RenderPass); // TODO: Framebuffers are part of renderpass not swapchain. Not a good place for this.
 		VulkanContext::getCommandHandler()->allocateCommandBuffers(s_MaxFramesInFlight);
 
-		//m_TextureTest = CreateShared<Image2D>("assets/textures/statue.jpg");
 		initTextureImage();
-		//initTextureImageView();
 
 		initVertexBuffer();
 		initIndexBuffer();
@@ -113,38 +82,44 @@ namespace vkEngine
 	{
 		m_Camera->Update(deltaTime);
 
-		//updateTextureDescriptor(deltaTime);
-		updateUniformBuffer(nextRenderFrame, deltaTime);
+		updateUniformBuffer(currentFrame, deltaTime);
 
 		m_App->getWindow()->pollEvents();
 	}
 
 	void Engine::render()
 	{
-		vkWaitForFences(VulkanContext::getDevice(), 1, &m_InFlightFences[nextRenderFrame], VK_TRUE, UINT64_MAX);
+		if (m_App->getWindow()->isMinimized())
+			return;
+
+		vkWaitForFences(VulkanContext::getDevice(), 1, &m_InFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+		updateTexture(m_DescriptorSets[currentFrame], 1);
 
 		auto& swapchain = VulkanContext::getSwapchain();
-		VkResult result = swapchain->acquireNextImage(nextRenderFrame);
+		VkResult result = swapchain->acquireNextImage(currentFrame);
 		uint32_t imageIndex = swapchain->getImageIndex();
+
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
+			vkWaitForFences(VulkanContext::getDevice(), s_MaxFramesInFlight, &m_InFlightFences[0], VK_TRUE, UINT64_MAX);
 			swapchain->recreateSwapchain(m_RenderPass);
 			return;
 		}
 		else
-			ENGINE_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "failed to acquire swap chain image!");
+			ENGINE_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "Failed to acquire swap chain image!");
 
-		vkResetFences(VulkanContext::getDevice(), 1, &m_InFlightFences[nextRenderFrame]);
+		vkResetFences(VulkanContext::getDevice(), 1, &m_InFlightFences[currentFrame]);
 
-		VkCommandBuffer cmdBuffer = VulkanContext::getCommandHandler()->getCommandBuffer(nextRenderFrame);
+		VkCommandBuffer cmdBuffer = VulkanContext::getCommandHandler()->getCommandBuffer(currentFrame);
 		vkResetCommandBuffer(cmdBuffer, 0);
 		recordCommandBuffer(cmdBuffer, imageIndex);
 
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-		VkSemaphore waitSemaphores[] = { swapchain->getImageSemaphore(nextRenderFrame) };
+		VkSemaphore waitSemaphores[] = { swapchain->getImageSemaphore(currentFrame) };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
@@ -152,23 +127,24 @@ namespace vkEngine
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &cmdBuffer;
 
-		VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[nextRenderFrame] };
+		VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[currentFrame] };
 		uint32_t signalSemaphoresCount = 1;
-		submitInfo.signalSemaphoreCount = signalSemaphoresCount;
 		submitInfo.pSignalSemaphores = signalSemaphores;
+		submitInfo.signalSemaphoreCount = signalSemaphoresCount;
 
-		VulkanContext::getQueueHandler()->submitCommands(submitInfo, m_InFlightFences[nextRenderFrame]);
+		VulkanContext::getQueueHandler()->submitCommands(submitInfo, m_InFlightFences[currentFrame]);
 
 		swapchain->present(signalSemaphores, signalSemaphoresCount);
 
-		nextRenderFrame = (imageIndex + 1) % s_MaxFramesInFlight;
+		currentFrame = (imageIndex + 1) % s_MaxFramesInFlight;
 	}
 
 	void vkEngine::Engine::cleanup()
 	{
-
 		VkDevice device = VulkanContext::getDevice();
 		m_TextureTest2.reset();
+		m_TextureTest.reset();
+		m_CurrentTexture.reset();
 
 		for (size_t i = 0; i < s_MaxFramesInFlight; i++)
 		{
@@ -197,7 +173,6 @@ namespace vkEngine
 		VulkanContext::destroyInstance();
 	}
 
-
 	void Engine::initDescriptorsSetLayout()
 	{
 		VkDescriptorSetLayoutBinding uboLayoutBinding{};
@@ -213,13 +188,11 @@ namespace vkEngine
 		samplerLayoutBinding.descriptorCount = 1;
 		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-
 		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 		layoutInfo.pBindings = bindings.data();
-
 
 		ENGINE_ASSERT(vkCreateDescriptorSetLayout(VulkanContext::getDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayout) == VK_SUCCESS, "Layout descriptors set creation failed");
 	}
@@ -262,10 +235,7 @@ namespace vkEngine
 			bufferInfo.offset = 0;
 			bufferInfo.range = VK_WHOLE_SIZE;
 
-			VkDescriptorImageInfo imageInfo{};
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = m_TextureTest2->getImageView();
-			imageInfo.sampler = m_TextureTest2->getSampler();
+			VkDescriptorImageInfo imageInfo = m_TextureTest->getDescriptorImageInfo();
 
 			std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
@@ -289,6 +259,38 @@ namespace vkEngine
 		}
 	}
 
+	void Engine::updateTexture(VkDescriptorSet descriptorSet, uint32_t binding) {
+		if (glfwGetKey(m_App->getWindow()->getWindowGLFW(), GLFW_KEY_1) == GLFW_PRESS)
+		{
+			m_CurrentTexture = m_TextureTest;
+		}
+		else if (glfwGetKey(m_App->getWindow()->getWindowGLFW(), GLFW_KEY_2) == GLFW_PRESS)
+		{
+			m_CurrentTexture = m_TextureTest2;
+		}
+		else
+		{
+			return;
+		}
+
+		float currentTime = CurrentTime::GetCurrentTimeInSec();
+
+		ENGINE_INFO("Time %f: ", currentTime);
+		// Update the descriptor set with the new texture
+
+		VkDescriptorImageInfo imageInfo = m_CurrentTexture->getDescriptorImageInfo();
+
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = descriptorSet;
+		descriptorWrite.dstBinding = binding;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pImageInfo = &imageInfo;
+
+		vkUpdateDescriptorSets(VulkanContext::getDevice(), 1, &descriptorWrite, 0, nullptr);
+	}
 	void Engine::initUniformBuffer()
 	{
 		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
@@ -301,9 +303,9 @@ namespace vkEngine
 		}
 	}
 
-
 	void Engine::initTextureImage()
 	{
+		m_TextureTest = CreateShared<Texture2D>("assets/textures/statue.jpg");
 		m_TextureTest2 = CreateShared<Texture2D>("assets/textures/brick_wall.jpg");
 	}
 
@@ -571,20 +573,6 @@ namespace vkEngine
 		m_IndexBuffer = CreateScoped<IndexBuffer>(indices);
 	}
 
-	void Engine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-	{
-		VkCommandBuffer commandBuffer = VulkanContext::getCommandHandler()->beginSingleTimeCommands();
-
-		VkBufferCopy copyRegion{};
-		copyRegion.srcOffset = 0; // Optional
-		copyRegion.dstOffset = 0; // Optional
-		copyRegion.size = size;
-
-		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-		VulkanContext::getCommandHandler()->endSingleTimeCommands(commandBuffer);
-	}
-
 	void Engine::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 	{
 		VkCommandBufferBeginInfo beginInfo{};
@@ -640,7 +628,7 @@ namespace vkEngine
 			m_PipelineLayout,
 			0,
 			1,
-			&m_DescriptorSets[nextRenderFrame],
+			&m_DescriptorSets[currentFrame],
 			0,
 			nullptr
 		);

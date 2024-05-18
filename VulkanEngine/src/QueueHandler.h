@@ -8,7 +8,7 @@ namespace vkEngine
 	struct QueueFamilyIndices
 	{
 	public:
-		uint32_t uniqueQueueFamilyCount()
+		size_t uniqueQueueFamilyCount()
 		{
 			std::unordered_set<QueueFamilyIndex> uniqueFamilies;
 			if (graphicsFamily.has_value())
@@ -18,7 +18,7 @@ namespace vkEngine
 			if (computeFamily.has_value())
 				uniqueFamilies.insert(computeFamily.value());
 
-			return static_cast<uint32_t>(uniqueFamilies.size());
+			return (uniqueFamilies.size());
 		}
 
 		std::unordered_set<QueueFamilyIndex> uniqueQueueFamilies()
@@ -63,8 +63,8 @@ namespace vkEngine
 		void initQueues();
 		void queryQueues();
 	private:
-		const Shared<LogicalDevice>& m_DeviceRef;
-		const Shared<PhysicalDevice>& m_PhysicalDeviceRef;
+		const Shared<LogicalDevice> m_Device;
+		const Shared<PhysicalDevice> m_PhysicalDevice;
 		
 		QueueFamilyIndices m_QueueIndices;
 		VkQueue m_GraphicsQueue;

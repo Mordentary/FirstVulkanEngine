@@ -34,8 +34,8 @@ namespace vkEngine
 	private:
 		VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
 		PhysicalDeviceInfo m_DeviceInfo;
-		const Shared<Instance>& m_InstanceRef;
-		const Shared<Window>& m_WindowRef;
+		const Shared<Instance> m_Instance;
+		const Shared<Window> m_Window;
 		const std::vector<const char*>& m_DeviceExtensions{};
 
 	private:

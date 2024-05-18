@@ -5,15 +5,15 @@
 namespace vkEngine
 {
 	QueueHandler::QueueHandler(const Shared<LogicalDevice>& device, const Shared<PhysicalDevice>& physicalDevice)
-		: m_DeviceRef(device),
-		 m_PhysicalDeviceRef(physicalDevice)
+		: m_Device(device),
+		 m_PhysicalDevice(physicalDevice)
 	{
 		initQueues();
 	}
 
 	void QueueHandler::initQueues()
 	{
-		m_QueueIndices = m_PhysicalDeviceRef->getAvaibleQueueFamilies();
+		m_QueueIndices = m_PhysicalDevice->getAvaibleQueueFamilies();
 		queryQueues();
 	}
 
@@ -31,11 +31,11 @@ namespace vkEngine
 	{
 		VkFence fence;
 		VkFenceCreateInfo fenceCreateInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-		vkCreateFence(m_DeviceRef->logicalDevice(), &fenceCreateInfo, nullptr, &fence);
+		vkCreateFence(m_Device->logicalDevice(), &fenceCreateInfo, nullptr, &fence);
 
 		vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, fence);
-		vkWaitForFences(m_DeviceRef->logicalDevice(), 1, &fence, VK_TRUE, UINT64_MAX);
-		vkDestroyFence(m_DeviceRef->logicalDevice(), fence, nullptr);
+		vkWaitForFences(m_Device->logicalDevice(), 1, &fence, VK_TRUE, UINT64_MAX);
+		vkDestroyFence(m_Device->logicalDevice(), fence, nullptr);
 	}
 
 	void QueueHandler::submitAndWaitIdle(VkSubmitInfo submitInfo)
@@ -49,7 +49,7 @@ namespace vkEngine
 		QueueFamilyIndex graphicsFamily = m_QueueIndices.graphicsFamily.value();
 		QueueFamilyIndex presentFamily = m_QueueIndices.presentFamily.value();
 
-		vkGetDeviceQueue(m_DeviceRef->logicalDevice(), graphicsFamily, 0, &m_GraphicsQueue);
-		vkGetDeviceQueue(m_DeviceRef->logicalDevice(), presentFamily, 0, &m_PresentQueue);
+		vkGetDeviceQueue(m_Device->logicalDevice(), graphicsFamily, 0, &m_GraphicsQueue);
+		vkGetDeviceQueue(m_Device->logicalDevice(), presentFamily, 0, &m_PresentQueue);
 	}
 }

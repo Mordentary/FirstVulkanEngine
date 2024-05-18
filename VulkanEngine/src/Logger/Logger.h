@@ -70,6 +70,6 @@ namespace vkEngine
 			__debugbreak();							 	\
 		}												\
 	}
-#elif _RELEASE
+#elif _DIST || _RELEASE
 #define ENGINE_ASSERT(x, msg, ...) x;
 #endif

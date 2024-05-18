@@ -30,7 +30,7 @@ namespace vkEngine
 	public:
 		Swapchain(const Shared<Window>& window, VkSurfaceKHR surface, Shared<LogicalDevice>& device, Shared<PhysicalDevice>& physicalD, Shared<QueueHandler>& qHandler, uint32_t maxFramesInFlight);
 		Swapchain() = delete;
-
+		~Swapchain();
 		void resize(uint32_t newWidth, uint32_t newHeight);
 		VkResult acquireNextImage(uint32_t frame);
 		void present(VkSemaphore* signalSemaphores, uint32_t count);
@@ -53,13 +53,14 @@ namespace vkEngine
 		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 	private:
-		const Shared<Window>& m_Window;
-		const Shared<QueueHandler>& m_QueueHandlerRef;
-		const Shared<LogicalDevice>& m_DeviceRef;
-		const Shared<PhysicalDevice>& m_PhysicalDeviceRef;
+		const Shared<Window> m_Window;
+		const Shared<QueueHandler> m_QueueHandler;
+		const Shared<PhysicalDevice> m_PhysicalDevice;
+		const Shared<LogicalDevice> m_Device;
 
-		VkSurfaceKHR m_Surface;
-		VkSwapchainKHR m_Swapchain{ nullptr };
+	private:
+		VkSurfaceKHR m_Surface = nullptr;
+		VkSwapchainKHR m_Swapchain = nullptr ;
 		std::vector<VkSemaphore> m_ImageAvailableSemaphores{};
 
 		std::vector<VkFramebuffer> m_SwapchainFramebuffers{};
@@ -71,7 +72,7 @@ namespace vkEngine
 		VkExtent2D m_SwapchainExtent{};
 
 		uint32_t m_ImageIndex;
-		const uint32_t& m_MaxFramesInFlight;
+		const uint32_t m_MaxFramesInFlight;
 
 		uint32_t m_Width = 1000, m_Height = 1000;
 	};

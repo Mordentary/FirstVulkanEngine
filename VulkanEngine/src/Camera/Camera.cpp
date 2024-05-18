@@ -28,9 +28,17 @@ namespace vkEngine
 
 	void Camera::Update(Timestep deltaTime)
 	{
+
+		if (m_Window->isMinimized())
+			return;
+
+		
 		UpdateCameraOrientation(deltaTime);
 		UpdateCameraDisplacement(deltaTime);
 		RecalculateViewProjection();
+
+
+
 	}
 
 	void Camera::UpdateCameraOrientation(Timestep dt)

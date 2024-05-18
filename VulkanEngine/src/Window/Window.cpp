@@ -1,17 +1,23 @@
 #include "pch.h"
 
 #include "Window.h"
+#include "VulkanContext.h"
 
 namespace vkEngine
 {
-	Window::Window(uint32_t width, uint32_t height, const std::string& title) : m_InitialWidth(width), m_InitialHeight(height), m_Title(title)
+
+	void glfwErrorCallback(int error, const char* description)
 	{
+		ENGINE_ERROR("GLFW Error %s, : %s", error, description);
+	}
+	Window::Window(uint32_t width, uint32_t height, const std::string& title) : m_InitialExtent({ width, height }), m_Title(title)
+	{
+		ENGINE_ASSERT(width != 0 || height != 0, "Window height/width is 0");
 		initWindow();
 	}
 
 	Window::~Window()
 	{
-
 		glfwDestroyWindow(m_glfwWindow);
 		glfwTerminate();
 	}
@@ -21,8 +27,9 @@ namespace vkEngine
 		glfwInit();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+		glfwSetErrorCallback(glfwErrorCallback);
 
-		m_glfwWindow = glfwCreateWindow(m_InitialWidth, m_InitialHeight, m_Title.c_str(), nullptr, nullptr);
+		m_glfwWindow = glfwCreateWindow(m_InitialExtent.first, m_InitialExtent.second, m_Title.c_str(), nullptr, nullptr);
 	}
 
 	void Window::disableCursor(bool isDisabled)
@@ -57,10 +64,19 @@ namespace vkEngine
 		glfwGetCursorPos(m_glfwWindow, &mouseX, &mouseY);
 		return { mouseX, mouseY };
 	}
-
-	std::pair<double, double> Window::getWindowSize() const
+	bool Window::isMinimized() const
 	{
-		int width, height;
+		int width = 0, height = 0;
+		glfwGetFramebufferSize(m_glfwWindow, &width, &height);
+		return (width == 0 || height == 0);
+	}
+
+	std::pair<int, int> Window::getWindowSize() const {
+		if (m_glfwWindow == nullptr) {
+			// Return a default size or handle the error accordingly
+			return { 0, 0 };
+		}
+		int width = 0, height = 0;
 		glfwGetFramebufferSize(m_glfwWindow, &width, &height);
 		return { width, height };
 	}

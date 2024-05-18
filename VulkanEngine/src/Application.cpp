@@ -23,10 +23,12 @@ namespace vkEngine
 		prepareEngine();
 		m_Engine->run();
 	}
+
 	void Application::prepareEngine()
 	{
-		m_Engine = CreateShared<Engine>(this);
+		m_Engine = CreateScoped<Engine>(this);
 		m_Window->createSurface(m_Engine->getInstance());
+
 	}
 
 	void Application::cleanup()

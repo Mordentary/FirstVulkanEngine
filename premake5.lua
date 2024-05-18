@@ -20,7 +20,6 @@ IncludeDir["GLFW"] = "VulkanEngine/vendor/GLFW/include"
 IncludeDir["glm"] = "VulkanEngine/vendor/glm"
 IncludeDir["stb_image"] = "VulkanEngine/vendor/stb_image"
 
-
 rule "ShaderCompilation"
     location "VulkanEngine/shaders"
     display "Shader"
@@ -28,7 +27,6 @@ rule "ShaderCompilation"
     buildmessage 'Compiling %(Filename) with glslc'
     buildcommands { 'glslc.exe "%(FullPath)" -o "shaders/bin/%(Filename)%(Extension).spv"' }
     buildoutputs { "VulkanEngine/shaders/bin/%(Filename)%(Extension).spv" }
-
 
 project "VulkanEngine"
     kind "ConsoleApp"
@@ -63,19 +61,19 @@ project "VulkanEngine"
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.glm}",
         "%{IncludeDir.Vulkan}"
-	}
+    }
    
 
     libdirs
     {
         "%{prj.name}/vendor/GLFW/lib-vc2022",
-        "C:/VulkanSDK/1.3.243.0/Lib"
+        "C:/VulkanSDK/1.3.243.0/Lib",
     }
     
     links
     {
         "glfw3.lib",
-        "vulkan-1.lib"
+        "vulkan-1.lib",
     }
 
 

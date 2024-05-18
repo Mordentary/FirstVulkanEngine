@@ -7,8 +7,8 @@ namespace vkEngine
 {
 	PhysicalDevice::PhysicalDevice(const Shared<Instance>& inst, const Shared<Window>& win, const std::vector<const char*>& deviceExt)
 		:
-		m_InstanceRef(inst),
-		m_WindowRef(win),
+		m_Instance(inst),
+		m_Window(win),
 		m_DeviceExtensions(deviceExt)
 	{
 		initialize();
@@ -34,7 +34,7 @@ namespace vkEngine
 
 	SwapChainSupportDetails PhysicalDevice::querySwapChainSupport() const
 	{
-		VkSurfaceKHR surface = m_WindowRef->getSurface();
+		VkSurfaceKHR surface = m_Window->getSurface();
 
 		SwapChainSupportDetails details;
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevice, surface, &details.capabilities);
@@ -84,7 +84,7 @@ namespace vkEngine
 
 	SwapChainSupportDetails PhysicalDevice::querySwapChainSupport(VkPhysicalDevice physicalDevice) const
 	{
-		VkSurfaceKHR surface = m_WindowRef->getSurface();
+		VkSurfaceKHR surface = m_Window->getSurface();
 
 		SwapChainSupportDetails details;
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &details.capabilities);
@@ -138,7 +138,7 @@ namespace vkEngine
 	VkBool32 PhysicalDevice::isQueueSupportPresentation(VkPhysicalDevice device, QueueFamilyIndex index) const
 	{
 		VkBool32 presentSupport;
-		vkGetPhysicalDeviceSurfaceSupportKHR(device, index, m_WindowRef->getSurface(), &presentSupport);
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, index, m_Window->getSurface(), &presentSupport);
 		return presentSupport;
 	}
 
@@ -188,7 +188,7 @@ namespace vkEngine
 
 	void PhysicalDevice::initialize()
 	{
-		VkInstance getInstance = m_InstanceRef->instance();
+		VkInstance getInstance = m_Instance->instance();
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(getInstance, &deviceCount, nullptr);
 		ENGINE_ASSERT(deviceCount, "Failed to find GPUs with Vulkan support");

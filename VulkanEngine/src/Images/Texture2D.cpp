@@ -116,7 +116,7 @@ namespace vkEngine
 
 		if (m_Format)
 		{
-			m_Image = CreateShared<Image2D>(
+			m_Image = CreateScoped<Image2D>(
 				VkExtent2D{ static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
 				m_Format,
 				usageFlags,
@@ -137,7 +137,7 @@ namespace vkEngine
 			else
 				ENGINE_ASSERT(false, "Format is not specified");
 
-			m_Image = CreateShared<Image2D>(
+			m_Image = CreateScoped<Image2D>(
 				VkExtent2D{ static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
 				format,
 				usageFlags,

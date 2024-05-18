@@ -30,7 +30,7 @@ namespace vkEngine
 		void loadTextureFromFile(const std::string& path);
 
 	private:
-		Shared<Image2D> m_Image = nullptr ;
+		Scoped<Image2D> m_Image = nullptr ;
 		VkSampler m_Sampler = nullptr;
 		VkFormat m_Format = VK_FORMAT_UNDEFINED;
 		bool m_EnableMipmaps = false;

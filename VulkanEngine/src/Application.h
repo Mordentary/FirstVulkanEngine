@@ -28,7 +28,7 @@ namespace vkEngine
 		void prepareEngine();
 		void cleanup();
 	private:
-		Shared<Engine> m_Engine = nullptr;
+		Scoped<Engine> m_Engine = nullptr;
 		Shared<Window> m_Window = nullptr;
 		const std::string m_AppName{};
 		const bool m_ValidationLayersEnabled = false;

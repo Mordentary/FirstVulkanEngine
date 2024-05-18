@@ -92,8 +92,11 @@ namespace vkEngine
 
 	void VulkanContext::cleanup()
 	{
-		m_Swapchain->cleanupSwapchain();
+		m_Swapchain.reset();
 		m_CommandHandler.reset();
+		m_QueueHandler.reset();
+		m_Device.reset();
+
 	}
 
 }

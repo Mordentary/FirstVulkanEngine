@@ -12,7 +12,6 @@
 
 namespace vkEngine
 {
-
 	const std::vector<Vertex> vertices = {
 		{{-0.5f, -0.5f, 0.f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
 		{{0.5f, -0.5f, 0.f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
@@ -58,23 +57,13 @@ namespace vkEngine
 		void init();
 		void initInstance();
 
-		//void updateTextureDescriptor(Timestep deltaTime);
-		//std::vector<Shared<Texture2D>> m_Textures;
-		//float m_TextureSwitchTimer = 0.0f;
-		//uint32_t m_CurrentTextureIndex = 0;
-
 	private:
-		const Application* m_App;
-		Shared<Camera> m_Camera;
-		Shared<Instance> m_Instance;
+		const Application* m_App = nullptr;
+		Scoped<Camera> m_Camera = nullptr;
+		Shared<Instance> m_Instance = nullptr;
 
 	private:
 		void initVulkan();
-
-
-		void initDescriptorsSetLayout();
-		void initDescriptorPool();
-		void initDescriptorSets();
 
 		void initGraphicsPipeline();
 		static std::vector<char> readFile(const std::string& filename);
@@ -82,18 +71,13 @@ namespace vkEngine
 
 		void initRenderPass();
 
-		//void initImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-		//VkImageView createImageView(VkImage image, VkFormat format);
-
 		void initBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+		//void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 		void initVertexBuffer();
 		void initIndexBuffer();
 		void initUniformBuffer();
 		void initTextureImage();
-		//void initTextureImageView();
-		//void initTextureSampler();
 
 		void initDepthResources();
 
@@ -104,37 +88,34 @@ namespace vkEngine
 		void initSyncObjects();
 	private:
 
+		void initDescriptorsSetLayout();
+		void initDescriptorPool();
+		void initDescriptorSets();
+
 		VkDescriptorSetLayout m_DescriptorSetLayout;
 		VkDescriptorPool m_DesciptorPool;
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 
+		void updateTexture(VkDescriptorSet descriptorSet, uint32_t binding);
+		// Variables to track the last update time and toggle between textures
+
+		float m_LastUpdateTime = 0.0f;
+
+		
+	
 		VkPipeline m_GraphicsPipeline;
 		VkPipelineLayout m_PipelineLayout{ VK_NULL_HANDLE };
 
+		Shared<Texture2D> m_TextureTest{ nullptr }, m_TextureTest2{ nullptr }, m_CurrentTexture{ nullptr };
 
-		Shared<Texture2D> m_TextureTest2{ nullptr };
-		//Shared<Texture2D> m_TextureTest2{ nullptr };
-	
 		Scoped<VertexBuffer> m_VertexBuffer{ nullptr };
 		Scoped<IndexBuffer> m_IndexBuffer{ nullptr };
 
 		std::vector<Shared<UniformBuffer>> m_UniformBuffers{};
 
-
-		//TODO: replace with Image2D class
-		//VkSampler m_TextureSampler;
-		//VkImageView m_TextureView;
-		//VkImage m_Texture;
-		//VkDeviceMemory m_TextureMemory;
-
 		VkImage m_DepthImage;
 		VkDeviceMemory m_DepthImageMemory;
 		VkImageView m_DepthImageView;
-
-
-		//std::vector<VkBuffer>  m_UniformBuffers{};
-		//std::vector<VkDeviceMemory> m_UniformBuffersMemory{};
-		//std::vector<void*> m_UniformBuffersMapped{};
 
 		std::vector<VkSemaphore> m_RenderFinishedSemaphores{};
 		std::vector<VkFence> m_InFlightFences{};
