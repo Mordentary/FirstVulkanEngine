@@ -13,6 +13,7 @@ namespace vkEngine
 	class LogicalDevice;
 	class QueueHandler;
 	class PhysicalDevice;
+	class DepthImage;
 
 	struct QueueFamilyIndices;
 
@@ -34,14 +35,14 @@ namespace vkEngine
 		void resize(uint32_t newWidth, uint32_t newHeight);
 		VkResult acquireNextImage(uint32_t frame);
 		void present(VkSemaphore* signalSemaphores, uint32_t count);
-		void recreateSwapchain(VkRenderPass renderpass);
+		void recreateSwapchain(VkRenderPass renderpass, Shared<DepthImage> depthImage);
 		void cleanupSwapchain();
 
 		VkSemaphore getImageSemaphore(uint32_t frame) { return m_ImageAvailableSemaphores[frame]; }
 		VkFormat getImagesFormat() const { return m_SwapchainImageFormat; }
 		VkExtent2D getExtent() const { return m_SwapchainExtent; }
 		VkFramebuffer getFramebuffer(uint32_t index) const { return m_SwapchainFramebuffers[index]; }
-		void initFramebuffers(VkRenderPass renderpass);
+		void initFramebuffers(VkRenderPass renderpass, Shared<DepthImage> dpImage);
 		uint32_t getImageIndex() const { return m_ImageIndex; }
 
 	private:

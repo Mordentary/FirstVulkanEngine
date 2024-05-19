@@ -31,6 +31,8 @@ namespace vkEngine
 
 		VkFormatProperties getFormatProperties(VkFormat format) const;
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+		VkFormat findDepthFormat();
+		bool hasStencilComponent(VkFormat format);
 	private:
 		VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
 		PhysicalDeviceInfo m_DeviceInfo;
@@ -45,6 +47,6 @@ namespace vkEngine
 		bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 		QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkQueueFlagBits flags) const;
 		SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice PhysicalDevice) const;
-	
+
 	};
 }

@@ -58,6 +58,20 @@ namespace vkEngine
 		return details;
 	}
 
+
+	VkFormat PhysicalDevice::findDepthFormat()
+	{
+		return findSupportedFormat(
+			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+		);
+	}
+	bool PhysicalDevice::hasStencilComponent(VkFormat format)
+	{
+		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+	}
+
 	VkFormat PhysicalDevice::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 	{
 		for (VkFormat format : candidates)
@@ -71,9 +85,9 @@ namespace vkEngine
 				return format;
 			}
 
-			ENGINE_ASSERT(false, "No suitable formats was found")
-				return format;
 		}
+			ENGINE_ASSERT(false, "No suitable formats was found")
+			return VK_FORMAT_UNDEFINED;
 	}
 	VkFormatProperties PhysicalDevice::getFormatProperties(VkFormat format) const
 	{

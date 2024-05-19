@@ -114,13 +114,21 @@ namespace vkEngine
 		if (m_EnableMipmaps)
 			usageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
+
+		Image2DConfig config;
+
 		if (m_Format)
 		{
+			config = {
+				.extent = {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)},
+				.format = m_Format,
+				.memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				.usageFlags = usageFlags,
+				.aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT
+			};
+
 			m_Image = CreateScoped<Image2D>(
-				VkExtent2D{ static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
-				m_Format,
-				usageFlags,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+				config
 			);
 		}
 		else
@@ -137,11 +145,16 @@ namespace vkEngine
 			else
 				ENGINE_ASSERT(false, "Format is not specified");
 
+			config = {
+				.extent = {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)},
+				.format = format,
+				.memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				.usageFlags = usageFlags,
+				.aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT
+			};
+
 			m_Image = CreateScoped<Image2D>(
-				VkExtent2D{ static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) },
-				format,
-				usageFlags,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+				config
 			);
 		}
 

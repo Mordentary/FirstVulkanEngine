@@ -17,11 +17,11 @@ namespace vkEngine
 		{{0.5f, -0.5f, 0.f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
 		{{0.5f, 0.5f, 0.f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
 		{{-0.5f, 0.5f, 0.f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-
+		
 		{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+		{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+		{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+		{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 	};
 
 	const std::vector<uint16_t> indices =
@@ -113,9 +113,11 @@ namespace vkEngine
 
 		std::vector<Shared<UniformBuffer>> m_UniformBuffers{};
 
-		VkImage m_DepthImage;
-		VkDeviceMemory m_DepthImageMemory;
-		VkImageView m_DepthImageView;
+		Shared<DepthImage> m_DepthImage;
+
+		//VkImage m_DepthImage;
+		//VkDeviceMemory m_DepthImageMemory;
+		//VkImageView m_DepthImageView;
 
 		std::vector<VkSemaphore> m_RenderFinishedSemaphores{};
 		std::vector<VkFence> m_InFlightFences{};

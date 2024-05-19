@@ -35,9 +35,6 @@ namespace vkEngine
 
 		static inline VkDevice getDevice() { return m_ContextInstance->m_Device->logicalDevice(); }
 
-		//TODO: Find the better place for functions
-		VkFormat findDepthFormat();
-		bool hasStencilComponent(VkFormat format);
 	private:
 		static inline void vulkanContextDeleterFunc(VulkanContext* ptr);
 		using ScopedVulkanContext = Scoped<VulkanContext, decltype(&vulkanContextDeleterFunc)>;

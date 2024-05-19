@@ -4,6 +4,7 @@
 #include "VulkanContext.h"
 #include "QueueHandler.h"
 #include "window/Window.h"
+#include <Images/Image2D.h>
 
 namespace vkEngine
 {
@@ -49,7 +50,7 @@ namespace vkEngine
 		}
 	}
 
-	void Swapchain::recreateSwapchain(VkRenderPass renderpass)
+	void Swapchain::recreateSwapchain(VkRenderPass renderpass, Shared<DepthImage> depthImage)
 	{
 		std::pair<int, int> screenSize{};
 		screenSize = m_Window->getWindowSize();
@@ -65,7 +66,7 @@ namespace vkEngine
 
 		initSwapchain();
 		initImageViews();
-		initFramebuffers(renderpass);
+		initFramebuffers(renderpass, depthImage);
 		initSemaphores();
 	}
 
@@ -89,7 +90,7 @@ namespace vkEngine
 		m_ImageAvailableSemaphores.clear();
 	}
 
-	void Swapchain::initFramebuffers(VkRenderPass renderpass)
+	void Swapchain::initFramebuffers(VkRenderPass renderpass, Shared<DepthImage> depthImage)
 	{
 		m_SwapchainFramebuffers.resize(m_SwapchainImageViews.size());
 
@@ -97,13 +98,14 @@ namespace vkEngine
 		{
 			VkImageView attachments[] =
 			{
-			  m_SwapchainImageViews[i]
+			  m_SwapchainImageViews[i],
+			  depthImage->getImageView()
 			};
 
 			VkFramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			framebufferInfo.renderPass = renderpass; //TODO: renderpass class?
-			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.attachmentCount = 2;
 			framebufferInfo.pAttachments = &attachments[0];
 			framebufferInfo.width = m_SwapchainExtent.width;
 			framebufferInfo.height = m_SwapchainExtent.height;

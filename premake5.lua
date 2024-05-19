@@ -33,7 +33,7 @@ project "VulkanEngine"
     language "C++"
     location "VulkanEngine"
     rules { "ShaderCompilation" }
-    cppdialect "C++17"
+    cppdialect "C++20"
 
     targetdir("bin/" .. outputdir ..  "/%{prj.name}")
 	objdir("bin-int/" .. outputdir ..  "/%{prj.name}")

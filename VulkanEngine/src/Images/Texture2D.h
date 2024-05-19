@@ -10,7 +10,7 @@ namespace vkEngine
 	{
 	public:
 		Texture2D(const std::string& path, VkFormat format, bool enableMipmaps = false, bool enableAnisotropy = true);
-		Texture2D::Texture2D(const std::string& path, bool enableMipmaps = false, bool enableAnisotropy = true);
+		Texture2D(const std::string& path, bool enableMipmaps = false, bool enableAnisotropy = true);
 		~Texture2D();
 
 		Texture2D(const Texture2D&) = delete;
