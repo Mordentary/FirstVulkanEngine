@@ -127,7 +127,7 @@ namespace vkEngine
 				.aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT
 			};
 
-			m_Image = CreateScoped<Image2D>(
+			m_Image = CreateScoped<Image2D>(VulkanContext::getPhysicalDevice(), VulkanContext::getLogicalDevice(),
 				config
 			);
 		}
@@ -153,7 +153,7 @@ namespace vkEngine
 				.aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT
 			};
 
-			m_Image = CreateScoped<Image2D>(
+			m_Image = CreateScoped<Image2D>(VulkanContext::getPhysicalDevice(), VulkanContext::getLogicalDevice(),
 				config
 			);
 		}

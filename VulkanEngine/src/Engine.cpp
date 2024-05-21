@@ -5,6 +5,7 @@
 #include "Application.h"
 #include "QueueHandler.h"
 #include "Utility/VulkanUtils.h"
+#include <tiny_obj_loader.h>
 
 namespace vkEngine
 {
@@ -49,8 +50,10 @@ namespace vkEngine
 	void Engine::init()
 	{
 		VulkanContext::initializeInstance(*this, deviceExtensions);
+		modelInit();
 		initVulkan();
 		m_Camera = CreateScoped<Camera>(glm::vec3{ 0.f, 0.5f, -1.f }, glm::vec3{ 0.f }, m_App->getWindow());
+
 	}
 
 	void Engine::initInstance()
@@ -60,11 +63,10 @@ namespace vkEngine
 
 	void vkEngine::Engine::initVulkan()
 	{
-		initDepthResources();
 		initRenderPass();
 		initDescriptorsSetLayout();
 		initGraphicsPipeline();
-		VulkanContext::getSwapchain()->initFramebuffers(m_RenderPass, m_DepthImage); // TODO: Framebuffers are part of renderpass not swapchain. Not a good place for this.
+		VulkanContext::getSwapchain()->initFramebuffers(m_RenderPass); // TODO: Framebuffers are part of renderpass not swapchain. Not a good place for this.
 		VulkanContext::getCommandHandler()->allocateCommandBuffers(s_MaxFramesInFlight);
 
 		initTextureImage();
@@ -103,7 +105,7 @@ namespace vkEngine
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			vkWaitForFences(VulkanContext::getDevice(), s_MaxFramesInFlight, &m_InFlightFences[0], VK_TRUE, UINT64_MAX);
-			swapchain->recreateSwapchain(m_RenderPass, m_DepthImage);
+			swapchain->recreateSwapchain(m_RenderPass);
 			return;
 		}
 		else
@@ -144,7 +146,6 @@ namespace vkEngine
 		m_TextureTest2.reset();
 		m_TextureTest.reset();
 		m_CurrentTexture.reset();
-		m_DepthImage.reset();
 
 		for (size_t i = 0; i < s_MaxFramesInFlight; i++)
 		{
@@ -291,6 +292,40 @@ namespace vkEngine
 
 		vkUpdateDescriptorSets(VulkanContext::getDevice(), 1, &descriptorWrite, 0, nullptr);
 	}
+	void Engine::modelInit()
+	{
+		Shared<Texture2D> modelTexture = CreateShared<Texture2D>(TEXTURE_PATH);
+
+		tinyobj::attrib_t attrib;
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;
+		std::string  err;
+
+		ENGINE_ASSERT(tinyobj::LoadObj(&attrib, &shapes, &materials, &err, MODEL_PATH.c_str()), err.c_str());
+
+		for (const auto& shape : shapes) {
+			for (const auto& index : shape.mesh.indices) {
+				Vertex vertex{};
+
+				vertex.position = {
+					attrib.vertices[3 * index.vertex_index + 0],
+					attrib.vertices[3 * index.vertex_index + 1],
+					attrib.vertices[3 * index.vertex_index + 2]
+				};
+
+				vertex.textureCoord = {
+				  attrib.texcoords[2 * index.texcoord_index + 0],
+					1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+				};
+
+				vertex.color = { 1.0f, 1.0f, 1.0f };
+
+
+				vertices.push_back(vertex);
+				indices.push_back(indices.size());
+			}
+		}
+	}
 	void Engine::initUniformBuffer()
 	{
 		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
@@ -305,32 +340,17 @@ namespace vkEngine
 
 	void Engine::initTextureImage()
 	{
-		m_TextureTest = CreateShared<Texture2D>("assets/textures/statue.jpg");
+		m_TextureTest = CreateShared<Texture2D>("assets/textures/viking_room.png");
 		m_TextureTest2 = CreateShared<Texture2D>("assets/textures/brick_wall.jpg");
 	}
 
-	void Engine::initDepthResources()
-	{
-		VkFormat depthFormat = VulkanContext::getPhysicalDevice()->findDepthFormat();
-		Image2DConfig config =
-		{
-			.extent = {VulkanContext::getSwapchain()->getExtent()},
-			.format = depthFormat,
-			.memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			.usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			.aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT
-		};
-
-		m_DepthImage = CreateShared<DepthImage>(config);
-	}
 
 	void Engine::updateUniformBuffer(uint32_t currentFrame, Timestep deltaTime)
 	{
 		UniformBufferObject ubo{};
 
 		float time = CurrentTime::GetCurrentTimeInSec();
-		ubo.modelMat = glm::rotate(glm::mat4(1.0f), glm::cos(time), glm::vec3(0.65, 0.52, 0.52)); // glm::rotate(glm::mat4(1.0f), cos(CurrentTime::GetCurrentTimeInSec()) * glm::radians(60.0f) * 10.f, glm::vec3(0.0f, 1.0f, 0.0f));
-
+		ubo.modelMat = glm::rotate(glm::mat4(1.0f), glm::cos(time), glm::vec3(0, 1, 0)); // glm::rotate(glm::mat4(1.0f), cos(CurrentTime::GetCurrentTimeInSec()) * glm::radians(60.0f) * 10.f, glm::vec3(0.0f, 1.0f, 0.0f));
 		ubo.viewMat = m_Camera->GetViewMatrix();
 		ubo.projMat = m_Camera->GetProjectionMatrix();
 		ubo.projMat[1][1] *= -1;
@@ -537,7 +557,7 @@ namespace vkEngine
 		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkAttachmentDescription depthAttachment{};
-		depthAttachment.format = m_DepthImage->getFormat();
+		depthAttachment.format = VulkanContext::getSwapchain()->getDepthBuffer()->getFormat();
 		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -644,7 +664,7 @@ namespace vkEngine
 		VkDeviceSize offsets[] = { 0 };
 
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;

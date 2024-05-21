@@ -20,8 +20,8 @@ namespace vkEngine
 		initSwapchain();
 		initImageViews();
 		initSemaphores();
+		initDepthBuffer();
 	}
-
 
 	Swapchain::~Swapchain() {
 		cleanupSwapchain();
@@ -50,7 +50,7 @@ namespace vkEngine
 		}
 	}
 
-	void Swapchain::recreateSwapchain(VkRenderPass renderpass, Shared<DepthImage> depthImage)
+	void Swapchain::recreateSwapchain(VkRenderPass renderpass)
 	{
 		std::pair<int, int> screenSize{};
 		screenSize = m_Window->getWindowSize();
@@ -61,12 +61,11 @@ namespace vkEngine
 			m_Window->waitEvents();
 		}
 
-
 		cleanupSwapchain();
-
 		initSwapchain();
+		m_DepthBuffer->resize(m_SwapchainExtent.width, m_SwapchainExtent.height);
 		initImageViews();
-		initFramebuffers(renderpass, depthImage);
+		initFramebuffers(renderpass);
 		initSemaphores();
 	}
 
@@ -90,7 +89,7 @@ namespace vkEngine
 		m_ImageAvailableSemaphores.clear();
 	}
 
-	void Swapchain::initFramebuffers(VkRenderPass renderpass, Shared<DepthImage> depthImage)
+	void Swapchain::initFramebuffers(VkRenderPass renderpass)
 	{
 		m_SwapchainFramebuffers.resize(m_SwapchainImageViews.size());
 
@@ -99,7 +98,7 @@ namespace vkEngine
 			VkImageView attachments[] =
 			{
 			  m_SwapchainImageViews[i],
-			  depthImage->getImageView()
+			  m_DepthBuffer->getImageView()
 			};
 
 			VkFramebufferCreateInfo framebufferInfo{};
@@ -114,6 +113,7 @@ namespace vkEngine
 			ENGINE_ASSERT(vkCreateFramebuffer(m_Device->logicalDevice(), &framebufferInfo, nullptr, &m_SwapchainFramebuffers[i]) == VK_SUCCESS, "Framebuffer creation failed");
 		}
 	}
+
 	void Swapchain::initSemaphores()
 	{
 		VkSemaphoreCreateInfo semaphoreInfo{};
@@ -129,6 +129,21 @@ namespace vkEngine
 			);
 		}
 	}
+
+	void Swapchain::initDepthBuffer()
+	{
+		VkFormat depthFormat = m_PhysicalDevice->findDepthFormat();
+		Image2DConfig config =
+		{
+			.extent = {m_SwapchainExtent},
+			.format = depthFormat,
+			.memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			.usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			.aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT
+		};
+		m_DepthBuffer = CreateScoped<DepthImage>(m_PhysicalDevice, m_Device, config);
+	}
+
 	VkPresentModeKHR Swapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& abailableModes)
 	{
 		for (const auto& availablePresentMode : abailableModes)

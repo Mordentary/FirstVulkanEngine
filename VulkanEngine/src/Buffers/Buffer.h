@@ -73,7 +73,7 @@ namespace vkEngine {
 	class IndexBuffer : public Buffer
 	{
 	public:
-		IndexBuffer(const std::vector<uint16_t>& indices);
+		IndexBuffer(const std::vector<uint32_t>& indices);
 	};
 
 }

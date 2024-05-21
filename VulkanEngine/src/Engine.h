@@ -12,23 +12,23 @@
 
 namespace vkEngine
 {
-	const std::vector<Vertex> vertices = {
-		{{-0.5f, -0.5f, 0.f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-		{{0.5f, -0.5f, 0.f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-		{{0.5f, 0.5f, 0.f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-		{{-0.5f, 0.5f, 0.f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-		
-		{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-		{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-		{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-		{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-	};
+	//const std::vector<Vertex> vertices = {
+	//	{{-0.5f, -0.5f, 0.f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+	//	{{0.5f, -0.5f, 0.f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+	//	{{0.5f, 0.5f, 0.f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+	//	{{-0.5f, 0.5f, 0.f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
 
-	const std::vector<uint16_t> indices =
-	{
-			0, 1, 2, 2, 3, 0,
-			4, 5, 6, 6, 7, 4
-	};
+	//	{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	//	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	//	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	//	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+	//};
+
+	//const std::vector<uint16_t> indices =
+	//{
+	//		0, 1, 2, 2, 3, 0,
+	//		4, 5, 6, 6, 7, 4
+	//};
 
 	struct UniformBufferObject
 	{
@@ -79,7 +79,6 @@ namespace vkEngine
 		void initUniformBuffer();
 		void initTextureImage();
 
-		void initDepthResources();
 
 		void updateUniformBuffer(uint32_t currentFrame, Timestep deltaTime);
 
@@ -96,15 +95,28 @@ namespace vkEngine
 		VkDescriptorPool m_DesciptorPool;
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 
+		//DEBUG FUNC
 		void updateTexture(VkDescriptorSet descriptorSet, uint32_t binding);
-		// Variables to track the last update time and toggle between textures
-
 		float m_LastUpdateTime = 0.0f;
-
 		
 	
+		void modelInit();
+		std::vector<Vertex> vertices{};
+		std::vector<uint32_t> indices{};
+
+
 		VkPipeline m_GraphicsPipeline;
 		VkPipelineLayout m_PipelineLayout{ VK_NULL_HANDLE };
+
+
+
+
+
+
+
+
+
+
 
 		Shared<Texture2D> m_TextureTest{ nullptr }, m_TextureTest2{ nullptr }, m_CurrentTexture{ nullptr };
 
@@ -113,7 +125,9 @@ namespace vkEngine
 
 		std::vector<Shared<UniformBuffer>> m_UniformBuffers{};
 
-		Shared<DepthImage> m_DepthImage;
+		const std::string MODEL_PATH = "assets/models/viking_room.obj";
+		const std::string TEXTURE_PATH = "assets/textures/viking_room.png";
+
 
 		//VkImage m_DepthImage;
 		//VkDeviceMemory m_DepthImageMemory;

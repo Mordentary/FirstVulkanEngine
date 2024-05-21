@@ -7,9 +7,12 @@
 
 namespace vkEngine
 {
-	Image2D::Image2D(const Image2DConfig& config)
-		: m_Config(config)
+	Image2D::Image2D(const Shared<PhysicalDevice>& phsDevice, const Shared<LogicalDevice>& device, const Image2DConfig& config)
+		: m_Config(config), m_Device(device), m_PhysDevice(phsDevice)
 	{
+		if (config.usageFlags == VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+			return;
+
 		createImage();
 		createImageView();
 	}
@@ -20,14 +23,14 @@ namespace vkEngine
 	}
 
 	void Image2D::cleanup() {
-		VkDevice device = VulkanContext::getDevice();
+		VkDevice device = m_Device->logicalDevice();
 		vkFreeMemory(device, m_Memory, nullptr);
 		vkDestroyImageView(device, m_ImageView, nullptr);
 		vkDestroyImage(device, m_Image, nullptr);
 	}
 
 	void Image2D::createImage() {
-		VkDevice device = VulkanContext::getDevice();
+		VkDevice device = m_Device->logicalDevice();
 		VkImageCreateInfo imageInfo = {};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -51,7 +54,7 @@ namespace vkEngine
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = VulkanUtils::findMemoryType(memRequirements.memoryTypeBits, m_Config.memoryProperties);
+		allocInfo.memoryTypeIndex = m_PhysDevice->findMemoryType(memRequirements.memoryTypeBits, m_Config.memoryProperties);
 
 		ENGINE_ASSERT(vkAllocateMemory(device, &allocInfo, nullptr, &m_Memory) == VK_SUCCESS, "Failed to allocate memory for image");
 
@@ -59,7 +62,7 @@ namespace vkEngine
 	}
 
 	void Image2D::createImageView() {
-		VkDevice device = VulkanContext::getDevice();
+		VkDevice device = m_Device->logicalDevice();
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = m_Image;
@@ -72,6 +75,17 @@ namespace vkEngine
 		viewInfo.subresourceRange.layerCount = 1;
 
 		ENGINE_ASSERT(vkCreateImageView(device, &viewInfo, nullptr, &m_ImageView) == VK_SUCCESS, "Failed to create image view");
+	}
+
+	void Image2D::resize(uint32_t width, uint32_t height)
+	{
+		cleanup();
+
+		m_Config.extent.width = width;
+		m_Config.extent.height = height;
+
+		createImage();
+		createImageView();
 	}
 
 	void Image2D::copyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer buffer, uint32_t width, uint32_t height)
@@ -155,6 +169,8 @@ namespace vkEngine
 
 	void DepthImage::createImage()
 	{
+		VkDevice device = m_Device->logicalDevice();
+
 		// Create depth image with the specified format, usage flags, and memory properties
 		VkImageCreateInfo imageInfo = {};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -171,32 +187,36 @@ namespace vkEngine
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		ENGINE_ASSERT(vkCreateImage(VulkanContext::getDevice(), &imageInfo, nullptr, &m_Image) == VK_SUCCESS,
+		ENGINE_ASSERT(vkCreateImage(device, &imageInfo, nullptr, &m_Image) == VK_SUCCESS,
 			"Failed to create depth image!");
 
 		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(VulkanContext::getDevice(), m_Image, &memRequirements);
+		vkGetImageMemoryRequirements(device, m_Image, &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = VulkanUtils::findMemoryType(memRequirements.memoryTypeBits, m_Config.memoryProperties);
+		allocInfo.memoryTypeIndex = m_PhysDevice->findMemoryType(memRequirements.memoryTypeBits, m_Config.memoryProperties);
 
-		ENGINE_ASSERT(vkAllocateMemory(VulkanContext::getDevice(), &allocInfo, nullptr, &m_Memory) == VK_SUCCESS,
+
+
+		ENGINE_ASSERT(vkAllocateMemory(device, &allocInfo, nullptr, &m_Memory) == VK_SUCCESS,
 			"Failed to allocate depth image memory!");
 
-		vkBindImageMemory(VulkanContext::getDevice(), m_Image, m_Memory, 0);
+		vkBindImageMemory(device, m_Image, m_Memory, 0);
 	}
 
 	void DepthImage::createImageView()
 	{
+		VkDevice device = m_Device->logicalDevice();
+
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = m_Image;
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		viewInfo.format = m_Config.format;
 		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		if (VulkanContext::getPhysicalDevice()->hasStencilComponent(m_Config.format))
+		if (m_PhysDevice->hasStencilComponent(m_Config.format))
 		{
 			viewInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 		}
@@ -205,13 +225,12 @@ namespace vkEngine
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 1;
 
-		ENGINE_ASSERT(vkCreateImageView(VulkanContext::getDevice(), &viewInfo, nullptr, &m_ImageView) == VK_SUCCESS,
+		ENGINE_ASSERT(vkCreateImageView(device, &viewInfo, nullptr, &m_ImageView) == VK_SUCCESS,
 			"Failed to create depth image view!");
 	}
 
-	DepthImage::DepthImage(const Image2DConfig& config)
+	DepthImage::DepthImage(const Shared<PhysicalDevice>& phsDevice, const Shared<LogicalDevice>& device, const Image2DConfig& config) : Image2D(phsDevice,device, config)
 	{
-		m_Config = config;
 		createImage();
 		createImageView();
 	};

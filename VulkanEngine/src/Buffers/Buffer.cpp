@@ -89,10 +89,10 @@ namespace vkEngine {
 		copyBuffer(stagingBufferObj.getBuffer(), bufferSize);
 	}
 
-	IndexBuffer::IndexBuffer(const std::vector<uint16_t>& indices)
-		: Buffer(sizeof(uint16_t)* indices.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+	IndexBuffer::IndexBuffer(const std::vector<uint32_t>& indices)
+		: Buffer(sizeof(uint32_t)* indices.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 	{
-		VkDeviceSize bufferSize = sizeof(uint16_t) * indices.size();
+		VkDeviceSize bufferSize = sizeof(uint32_t) * indices.size();
 
 		Buffer stagingBufferObj(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		stagingBufferObj.copyData((void*)indices.data(), bufferSize);

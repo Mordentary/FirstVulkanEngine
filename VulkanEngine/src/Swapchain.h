@@ -35,20 +35,24 @@ namespace vkEngine
 		void resize(uint32_t newWidth, uint32_t newHeight);
 		VkResult acquireNextImage(uint32_t frame);
 		void present(VkSemaphore* signalSemaphores, uint32_t count);
-		void recreateSwapchain(VkRenderPass renderpass, Shared<DepthImage> depthImage);
+		void recreateSwapchain(VkRenderPass renderpass);
 		void cleanupSwapchain();
+	
 
+
+		const Scoped<DepthImage>& getDepthBuffer() const { return m_DepthBuffer; }
 		VkSemaphore getImageSemaphore(uint32_t frame) { return m_ImageAvailableSemaphores[frame]; }
 		VkFormat getImagesFormat() const { return m_SwapchainImageFormat; }
 		VkExtent2D getExtent() const { return m_SwapchainExtent; }
 		VkFramebuffer getFramebuffer(uint32_t index) const { return m_SwapchainFramebuffers[index]; }
-		void initFramebuffers(VkRenderPass renderpass, Shared<DepthImage> dpImage);
+		void initFramebuffers(VkRenderPass renderpass);
 		uint32_t getImageIndex() const { return m_ImageIndex; }
-
 	private:
 		void initSwapchain();
 		void initImageViews();
 		void initSemaphores();
+		void initDepthBuffer();
+	
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& abailableModes);
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
@@ -63,8 +67,10 @@ namespace vkEngine
 		VkSurfaceKHR m_Surface = nullptr;
 		VkSwapchainKHR m_Swapchain = nullptr ;
 		std::vector<VkSemaphore> m_ImageAvailableSemaphores{};
-
 		std::vector<VkFramebuffer> m_SwapchainFramebuffers{};
+		Scoped<DepthImage> m_DepthBuffer;
+	
+
 
 		//TODO: should I go with different image class aka swapchainImage?
 		std::vector<VkImage> m_SwapchainImages{};

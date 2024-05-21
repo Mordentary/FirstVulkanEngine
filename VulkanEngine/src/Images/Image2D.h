@@ -4,6 +4,9 @@
 
 namespace vkEngine
 {
+	class LogicalDevice;
+	class PhysicalDevice;
+
 	struct Image2DConfig
 	{
 		VkExtent2D extent;
@@ -16,7 +19,7 @@ namespace vkEngine
 	class Image2D
 	{
 	public:
-		Image2D(const Image2DConfig& config);
+		Image2D(const Shared<PhysicalDevice>& phsDevice, const Shared<LogicalDevice>& device, const Image2DConfig& config);
 		virtual ~Image2D();
 
 		// Disable copy and assignment
@@ -25,7 +28,8 @@ namespace vkEngine
 
 		virtual void transitionImageLayout(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
 
-		void copyDataToImage(const void* data, VkDeviceSize size);
+		void resize(uint32_t width, uint32_t height);
+		//void copyDataToImage(const void* data, VkDeviceSize size);
 		void copyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer buffer, uint32_t width, uint32_t height);
 
 		// Getters
@@ -42,6 +46,9 @@ namespace vkEngine
 		virtual void createImageView();
 
 	protected:
+		const Shared<LogicalDevice> m_Device = nullptr;
+		const Shared<PhysicalDevice> m_PhysDevice = nullptr;
+	protected:
 		Image2DConfig m_Config;
 		VkImage m_Image;
 		VkImageView m_ImageView;
@@ -51,7 +58,7 @@ namespace vkEngine
 	class DepthImage : public Image2D
 	{
 	public:
-		DepthImage(const Image2DConfig& config);
+		DepthImage(const Shared<PhysicalDevice>& phsDevice, const Shared<LogicalDevice>& device, const Image2DConfig& config);
 
 		void transitionImageLayout(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout) override;
 		// Disable copy and assignment
@@ -62,5 +69,4 @@ namespace vkEngine
 		void createImage() override;
 		void createImageView() override;
 	};
-
 }

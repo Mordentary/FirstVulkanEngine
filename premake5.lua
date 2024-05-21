@@ -19,6 +19,8 @@ IncludeDir ["Vulkan"] = "C:/VulkanSDK/1.3.243.0/Include"
 IncludeDir["GLFW"] = "VulkanEngine/vendor/GLFW/include"
 IncludeDir["glm"] = "VulkanEngine/vendor/glm"
 IncludeDir["stb_image"] = "VulkanEngine/vendor/stb_image"
+IncludeDir["TinyLoader"] = "VulkanEngine/vendor/TinyObjLoader"
+
 
 rule "ShaderCompilation"
     location "VulkanEngine/shaders"
@@ -47,7 +49,9 @@ project "VulkanEngine"
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/vendor/stb_image/**.cpp",
 		"%{prj.name}/vendor/stb_image/**.h",
-		"%{prj.name}/vendor/glm/glm/**.hpp",
+		"%{prj.name}/vendor/TinyObjLoader/**.cpp",
+		"%{prj.name}/vendor/TinyObjLoader/**.h",
+        "%{prj.name}/vendor/glm/glm/**.hpp",
 		"%{prj.name}/vendor/glm/glm/**.inl",
         "%{prj.name}/shaders/src/**.frag",
         "%{prj.name}/shaders/src/**.vert",
@@ -60,7 +64,8 @@ project "VulkanEngine"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.glm}",
-        "%{IncludeDir.Vulkan}"
+        "%{IncludeDir.Vulkan}",
+        "%{IncludeDir.TinyLoader}"
     }
    
 

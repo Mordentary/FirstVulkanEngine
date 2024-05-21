@@ -27,6 +27,8 @@ namespace vkEngine
 		QueueFamilyIndices getAvaibleQueueFamilies() const;
 		SwapChainSupportDetails querySwapChainSupport() const;
 
+		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
 		const PhysicalDeviceInfo& getDeviceInfo() const { return m_DeviceInfo; }
 
 		VkFormatProperties getFormatProperties(VkFormat format) const;
@@ -40,13 +42,14 @@ namespace vkEngine
 		const Shared<Window> m_Window;
 		const std::vector<const char*>& m_DeviceExtensions{};
 
-	private:
-		void initialize();
-		bool isDeviceSuitable(VkPhysicalDevice device);
-		VkBool32 isQueueSupportPresentation(VkPhysicalDevice device, QueueFamilyIndex index) const;
-		bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-		QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkQueueFlagBits flags) const;
-		SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice PhysicalDevice) const;
+		private
+			:
+				void initialize();
+				bool isDeviceSuitable(VkPhysicalDevice device);
+				VkBool32 isQueueSupportPresentation(VkPhysicalDevice device, QueueFamilyIndex index) const;
+				bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+				QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkQueueFlagBits flags) const;
+				SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice PhysicalDevice) const;
 
 	};
 }
