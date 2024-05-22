@@ -4,8 +4,6 @@
 
 namespace vkEngine
 {
-
-
 	class Texture2D
 	{
 	public:
@@ -23,14 +21,13 @@ namespace vkEngine
 
 		void updateDescriptor(VkDescriptorSet descriptorSet, uint32_t binding);
 
-
 	private:
-		void generateMipmaps();
+		void generateMipmaps(VkCommandBuffer buffer);
 		void createTextureSampler();
 		void loadTextureFromFile(const std::string& path);
 
 	private:
-		Scoped<Image2D> m_Image = nullptr ;
+		Scoped<Image2D> m_Image = nullptr;
 		VkSampler m_Sampler = nullptr;
 		VkFormat m_Format = VK_FORMAT_UNDEFINED;
 		bool m_EnableMipmaps = false;

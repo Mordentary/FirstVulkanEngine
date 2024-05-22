@@ -37,7 +37,7 @@ namespace vkEngine
 		imageInfo.extent.width = m_Config.extent.width;
 		imageInfo.extent.height = m_Config.extent.height;
 		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = 1;
+		imageInfo.mipLevels = m_Config.mipmapLevel;
 		imageInfo.arrayLayers = 1;
 		imageInfo.format = m_Config.format;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -70,7 +70,7 @@ namespace vkEngine
 		viewInfo.format = m_Config.format;
 		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.levelCount = m_Config.mipmapLevel;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 1;
 
@@ -128,10 +128,10 @@ namespace vkEngine
 
 		barrier.image = m_Image;
 		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
+		barrier.subresourceRange.layerCount= 1;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = m_Config.mipmapLevel;
 
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
@@ -187,6 +187,7 @@ namespace vkEngine
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
+
 		ENGINE_ASSERT(vkCreateImage(device, &imageInfo, nullptr, &m_Image) == VK_SUCCESS,
 			"Failed to create depth image!");
 
@@ -197,8 +198,6 @@ namespace vkEngine
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = m_PhysDevice->findMemoryType(memRequirements.memoryTypeBits, m_Config.memoryProperties);
-
-
 
 		ENGINE_ASSERT(vkAllocateMemory(device, &allocInfo, nullptr, &m_Memory) == VK_SUCCESS,
 			"Failed to allocate depth image memory!");
@@ -229,7 +228,7 @@ namespace vkEngine
 			"Failed to create depth image view!");
 	}
 
-	DepthImage::DepthImage(const Shared<PhysicalDevice>& phsDevice, const Shared<LogicalDevice>& device, const Image2DConfig& config) : Image2D(phsDevice,device, config)
+	DepthImage::DepthImage(const Shared<PhysicalDevice>& phsDevice, const Shared<LogicalDevice>& device, const Image2DConfig& config) : Image2D(phsDevice, device, config)
 	{
 		createImage();
 		createImageView();

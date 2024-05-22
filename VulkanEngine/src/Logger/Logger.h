@@ -61,7 +61,7 @@ namespace vkEngine
 #define ENGINE_ERROR(msg, ...) vkEngine::Logger::getInstance()._log(vkEngine::LogLevel::Error, msg, __VA_ARGS__)
 #define ENGINE_FATAL(msg, ...) vkEngine::Logger::getInstance()._log(vkEngine::LogLevel::Fatal, msg, __VA_ARGS__)
 
-#ifdef _DEBUG
+#ifdef DEBUG
 #define ENGINE_ASSERT(x, msg, ...)					\
 	{													\
 		if(!(x))										\
@@ -70,6 +70,6 @@ namespace vkEngine
 			__debugbreak();							 	\
 		}												\
 	}
-#elif _DIST || _RELEASE
+#elif DIST || RELEASE
 #define ENGINE_ASSERT(x, msg, ...) x;
 #endif

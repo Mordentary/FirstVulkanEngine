@@ -9,12 +9,14 @@ namespace vkEngine
 
 	struct Image2DConfig
 	{
-		VkExtent2D extent;
-		VkFormat format;
-		VkMemoryPropertyFlags memoryProperties;
-		VkImageUsageFlags usageFlags;
-		VkImageAspectFlags aspectFlags;
+		VkExtent2D extent{};
+		VkFormat format = VK_FORMAT_UNDEFINED;
+		VkMemoryPropertyFlags memoryProperties = 0;
+		VkImageUsageFlags usageFlags = 0;
+		VkImageAspectFlags aspectFlags = 0;
+		uint32_t mipmapLevel = 0;
 	};
+
 
 	class Image2D
 	{
@@ -37,7 +39,7 @@ namespace vkEngine
 		VkImageView getImageView() const { return m_ImageView; }
 		VkExtent2D getExtent() const { return m_Config.extent; }
 		VkFormat getFormat() const { return m_Config.format; }
-
+		Image2DConfig getConfig() const { return m_Config; }
 	private:
 		void cleanup();
 	protected:

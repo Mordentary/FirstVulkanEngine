@@ -6,6 +6,8 @@
 #include "QueueHandler.h"
 #include "Utility/VulkanUtils.h"
 #include <tiny_obj_loader.h>
+#include <unordered_map>
+#include <glm/gtx/string_cast.hpp>
 
 namespace vkEngine
 {
@@ -177,8 +179,8 @@ namespace vkEngine
 	void Engine::initDescriptorsSetLayout()
 	{
 		VkDescriptorSetLayoutBinding uboLayoutBinding{};
-		uboLayoutBinding.binding = 0;
 		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.binding = 0;
 		uboLayoutBinding.descriptorCount = 1;
 		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
@@ -294,7 +296,7 @@ namespace vkEngine
 	}
 	void Engine::modelInit()
 	{
-		Shared<Texture2D> modelTexture = CreateShared<Texture2D>(TEXTURE_PATH);
+		Shared<Texture2D> modelTexture = CreateShared<Texture2D>(TEXTURE_PATH,  true);
 
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
@@ -302,6 +304,8 @@ namespace vkEngine
 		std::string  err;
 
 		ENGINE_ASSERT(tinyobj::LoadObj(&attrib, &shapes, &materials, &err, MODEL_PATH.c_str()), err.c_str());
+
+		std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
 		for (const auto& shape : shapes) {
 			for (const auto& index : shape.mesh.indices) {
@@ -321,8 +325,14 @@ namespace vkEngine
 				vertex.color = { 1.0f, 1.0f, 1.0f };
 
 
-				vertices.push_back(vertex);
-				indices.push_back(indices.size());
+				if (uniqueVertices.count(vertex) == 0)
+				{
+					uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+					vertices.push_back(vertex);
+				}
+
+				indices.push_back(uniqueVertices[vertex]);
+
 			}
 		}
 	}
@@ -340,8 +350,8 @@ namespace vkEngine
 
 	void Engine::initTextureImage()
 	{
-		m_TextureTest = CreateShared<Texture2D>("assets/textures/viking_room.png");
-		m_TextureTest2 = CreateShared<Texture2D>("assets/textures/brick_wall.jpg");
+		m_TextureTest = CreateShared<Texture2D>("assets/textures/viking_room.png", VK_SAMPLE_COUNT_1_BIT, true);
+		m_TextureTest2 = CreateShared<Texture2D>("assets/textures/brick_wall.jpg", VK_SAMPLE_COUNT_1_BIT, true);
 	}
 
 
@@ -350,7 +360,14 @@ namespace vkEngine
 		UniformBufferObject ubo{};
 
 		float time = CurrentTime::GetCurrentTimeInSec();
-		ubo.modelMat = glm::rotate(glm::mat4(1.0f), glm::cos(time), glm::vec3(0, 1, 0)); // glm::rotate(glm::mat4(1.0f), cos(CurrentTime::GetCurrentTimeInSec()) * glm::radians(60.0f) * 10.f, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//ENGINE_INFO(std::string("Camera pos " + glm::to_string(m_Camera->GetPosition())).c_str());
+
+		glm::mat4 modelMat = glm::mat4(1.0f);
+
+		modelMat = glm::rotate(modelMat, 90.f, glm::vec3(0, 0, 1));
+
+		ubo.modelMat = glm::rotate(modelMat, glm::cos(0.f), glm::vec3(0, 1, 0));
 		ubo.viewMat = m_Camera->GetViewMatrix();
 		ubo.projMat = m_Camera->GetProjectionMatrix();
 		ubo.projMat[1][1] *= -1;

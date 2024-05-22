@@ -12,24 +12,6 @@
 
 namespace vkEngine
 {
-	//const std::vector<Vertex> vertices = {
-	//	{{-0.5f, -0.5f, 0.f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-	//	{{0.5f, -0.5f, 0.f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-	//	{{0.5f, 0.5f, 0.f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-	//	{{-0.5f, 0.5f, 0.f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-
-	//	{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-	//	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-	//	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-	//	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-	//};
-
-	//const std::vector<uint16_t> indices =
-	//{
-	//		0, 1, 2, 2, 3, 0,
-	//		4, 5, 6, 6, 7, 4
-	//};
-
 	struct UniformBufferObject
 	{
 		glm::mat4 modelMat;
@@ -98,23 +80,18 @@ namespace vkEngine
 		//DEBUG FUNC
 		void updateTexture(VkDescriptorSet descriptorSet, uint32_t binding);
 		float m_LastUpdateTime = 0.0f;
-		
-	
+
+
 		void modelInit();
 		std::vector<Vertex> vertices{};
 		std::vector<uint32_t> indices{};
+		const std::string MODEL_PATH = "assets/models/viking_room.obj";
+		const std::string TEXTURE_PATH = "assets/textures/viking_room.png";
 
+		VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
 		VkPipeline m_GraphicsPipeline;
 		VkPipelineLayout m_PipelineLayout{ VK_NULL_HANDLE };
-
-
-
-
-
-
-
-
 
 
 
@@ -125,8 +102,6 @@ namespace vkEngine
 
 		std::vector<Shared<UniformBuffer>> m_UniformBuffers{};
 
-		const std::string MODEL_PATH = "assets/models/viking_room.obj";
-		const std::string TEXTURE_PATH = "assets/textures/viking_room.png";
 
 
 		//VkImage m_DepthImage;

@@ -26,8 +26,11 @@ namespace vkEngine
 		VkQueueFamilyProperties getQueueFamilyProperties(uint32_t index) const { return m_DeviceInfo.queueFamiliesProperties[index]; }
 		QueueFamilyIndices getAvaibleQueueFamilies() const;
 		SwapChainSupportDetails querySwapChainSupport() const;
+		bool mipmapsSupport(VkFormat imageFormat) const;
+		VkSampleCountFlagBits getMaxUsableSampleCount() const;
 
-		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+			uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 		const PhysicalDeviceInfo& getDeviceInfo() const { return m_DeviceInfo; }
 

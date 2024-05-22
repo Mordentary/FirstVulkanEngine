@@ -148,7 +148,7 @@ namespace vkEngine
 	inline void Camera::RecalculateProjection()
 	{
 		auto [width, height] = m_Window->getWindowSize();
-		m_AspectRatio = static_cast<float>(width / height);
+		  m_AspectRatio = static_cast<float>(width) / static_cast<float>(height);
 		m_ProjectionMatrix = glm::perspective(glm::radians(m_FOVdeg), (float)m_AspectRatio, m_NearFar.x, m_NearFar.y);
 		m_ProjectionViewMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}

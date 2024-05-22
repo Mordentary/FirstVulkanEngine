@@ -13,7 +13,6 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 proj;
 } ubo;
 
-
 void main()
 {
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(a_Position, 1.0);

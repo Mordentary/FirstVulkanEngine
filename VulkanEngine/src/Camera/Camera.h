@@ -11,7 +11,7 @@ namespace vkEngine
 	public:
 		Camera() = default;
 		Camera(const glm::vec3& position, const glm::vec3& cameraTarget, const Shared<Window> window, float FOV = 90.0f, const glm::vec2& nearFar = { 0.1f,100.f });
-
+		
 		void Update(Timestep deltaTime);
 
 		const inline glm::mat4& GetProjectionViewMatrix() const { return m_ProjectionViewMatrix; }
@@ -28,8 +28,8 @@ namespace vkEngine
 		void RecalculateViewProjection();
 		void RecalculateProjection();
 	private:
-		Shared<Window> m_Window;
-		glm::vec2 m_NearFar;
+		Shared<Window> m_Window = nullptr;
+		glm::vec2 m_NearFar{};
 
 		float m_FOVdeg = 90.f;
 		float m_CameraSensivity = 50.0f;

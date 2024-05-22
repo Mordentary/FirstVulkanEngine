@@ -58,13 +58,50 @@ namespace vkEngine
 		return details;
 	}
 
+	bool PhysicalDevice::mipmapsSupport(VkFormat imageFormat) const
+	{
+		VkFormatProperties formatProperties;
+		vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, imageFormat, &formatProperties);
+		return (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
+	}
+
+	VkSampleCountFlagBits PhysicalDevice::getMaxUsableSampleCount() const
+	{
+		VkPhysicalDeviceProperties physicalDeviceProperties;
+		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &physicalDeviceProperties);
+
+		VkSampleCountFlags colorSampleCounts = physicalDeviceProperties.limits.framebufferColorSampleCounts;
+		VkSampleCountFlags depthSampleCounts = physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+
+		if (colorSampleCounts & VK_SAMPLE_COUNT_64_BIT && depthSampleCounts & VK_SAMPLE_COUNT_64_BIT) {
+			return VK_SAMPLE_COUNT_64_BIT;
+		}
+		if (colorSampleCounts & VK_SAMPLE_COUNT_32_BIT && depthSampleCounts & VK_SAMPLE_COUNT_32_BIT) {
+			return VK_SAMPLE_COUNT_32_BIT;
+		}
+		if (colorSampleCounts & VK_SAMPLE_COUNT_16_BIT && depthSampleCounts & VK_SAMPLE_COUNT_16_BIT) {
+			return VK_SAMPLE_COUNT_16_BIT;
+		}
+		if (colorSampleCounts & VK_SAMPLE_COUNT_8_BIT && depthSampleCounts & VK_SAMPLE_COUNT_8_BIT) {
+			return VK_SAMPLE_COUNT_8_BIT;
+		}
+		if (colorSampleCounts & VK_SAMPLE_COUNT_4_BIT && depthSampleCounts & VK_SAMPLE_COUNT_4_BIT) {
+			return VK_SAMPLE_COUNT_4_BIT;
+		}
+		if (colorSampleCounts & VK_SAMPLE_COUNT_2_BIT && depthSampleCounts & VK_SAMPLE_COUNT_2_BIT) {
+			return VK_SAMPLE_COUNT_2_BIT;
+		}
+		return VK_SAMPLE_COUNT_1_BIT;
+
+		return VK_SAMPLE_COUNT_1_BIT;
+	}
 	uint32_t PhysicalDevice::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 	{
 		VkPhysicalDeviceMemoryProperties memProperties = getMemoryProperties();
 
-		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
+		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
 		{
-			if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) 
+			if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
 			{
 				return i;
 			}
@@ -99,7 +136,6 @@ namespace vkEngine
 			{
 				return format;
 			}
-
 		}
 		ENGINE_ASSERT(false, "No suitable formats was found")
 			return VK_FORMAT_UNDEFINED;
@@ -208,12 +244,10 @@ namespace vkEngine
 		return indices;
 	}
 
-
 	QueueFamilyIndices PhysicalDevice::getAvaibleQueueFamilies() const
 	{
 		return findQueueFamilies(m_PhysicalDevice, VK_QUEUE_GRAPHICS_BIT);
 	}
-
 
 	void PhysicalDevice::initialize()
 	{
