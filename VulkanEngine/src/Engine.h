@@ -88,7 +88,6 @@ namespace vkEngine
 		const std::string MODEL_PATH = "assets/models/viking_room.obj";
 		const std::string TEXTURE_PATH = "assets/textures/viking_room.png";
 
-		VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
 		VkPipeline m_GraphicsPipeline;
 		VkPipelineLayout m_PipelineLayout{ VK_NULL_HANDLE };

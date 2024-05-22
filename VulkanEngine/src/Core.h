@@ -18,7 +18,7 @@ namespace vkEngine
 {
 	using QueueFamilyIndex = uint32_t;
 
-	template <typename T, typename Deleter = std::default_delete<T>>
+	template <typename T>
 	using Shared = std::shared_ptr<T>;
 	template<typename T, typename ... Args>
 	constexpr Shared<T> CreateShared(Args&& ... args)

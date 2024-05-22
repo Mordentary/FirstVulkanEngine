@@ -14,6 +14,8 @@ namespace vkEngine
 	class QueueHandler;
 	class PhysicalDevice;
 	class DepthImage;
+	class Image2D;
+
 
 	struct QueueFamilyIndices;
 
@@ -37,9 +39,10 @@ namespace vkEngine
 		void present(VkSemaphore* signalSemaphores, uint32_t count);
 		void recreateSwapchain(VkRenderPass renderpass);
 		void cleanupSwapchain();
-	
 
 
+
+		const Scoped<Image2D>& getMSAABuffer() const { return m_MultisampledColorBuffer; }
 		const Scoped<DepthImage>& getDepthBuffer() const { return m_DepthBuffer; }
 		VkSemaphore getImageSemaphore(uint32_t frame) { return m_ImageAvailableSemaphores[frame]; }
 		VkFormat getImagesFormat() const { return m_SwapchainImageFormat; }
@@ -52,7 +55,8 @@ namespace vkEngine
 		void initImageViews();
 		void initSemaphores();
 		void initDepthBuffer();
-	
+		void initMSAAColorBuffer();
+
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& abailableModes);
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
@@ -65,11 +69,11 @@ namespace vkEngine
 
 	private:
 		VkSurfaceKHR m_Surface = nullptr;
-		VkSwapchainKHR m_Swapchain = nullptr ;
+		VkSwapchainKHR m_Swapchain = nullptr;
 		std::vector<VkSemaphore> m_ImageAvailableSemaphores{};
 		std::vector<VkFramebuffer> m_SwapchainFramebuffers{};
 		Scoped<DepthImage> m_DepthBuffer;
-	
+		Scoped<Image2D> m_MultisampledColorBuffer;
 
 
 		//TODO: should I go with different image class aka swapchainImage?

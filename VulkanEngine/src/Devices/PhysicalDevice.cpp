@@ -67,6 +67,7 @@ namespace vkEngine
 
 	VkSampleCountFlagBits PhysicalDevice::getMaxUsableSampleCount() const
 	{
+
 		VkPhysicalDeviceProperties physicalDeviceProperties;
 		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &physicalDeviceProperties);
 

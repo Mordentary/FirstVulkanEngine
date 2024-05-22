@@ -43,8 +43,9 @@ namespace vkEngine
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage = m_Config.usageFlags;
-		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageInfo.samples = m_Config.sampleCount;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
 
 		ENGINE_ASSERT(vkCreateImage(device, &imageInfo, nullptr, &m_Image) == VK_SUCCESS, "Failed to create image");
 
@@ -129,7 +130,7 @@ namespace vkEngine
 		barrier.image = m_Image;
 		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount= 1;
+		barrier.subresourceRange.layerCount = 1;
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = m_Config.mipmapLevel;
 
@@ -184,7 +185,7 @@ namespace vkEngine
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage = m_Config.usageFlags;
-		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageInfo.samples = m_Config.sampleCount;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 

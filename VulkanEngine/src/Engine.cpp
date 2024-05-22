@@ -55,7 +55,6 @@ namespace vkEngine
 		modelInit();
 		initVulkan();
 		m_Camera = CreateScoped<Camera>(glm::vec3{ 0.f, 0.5f, -1.f }, glm::vec3{ 0.f }, m_App->getWindow());
-
 	}
 
 	void Engine::initInstance()
@@ -296,7 +295,7 @@ namespace vkEngine
 	}
 	void Engine::modelInit()
 	{
-		Shared<Texture2D> modelTexture = CreateShared<Texture2D>(TEXTURE_PATH,  true);
+		Shared<Texture2D> modelTexture = CreateShared<Texture2D>(TEXTURE_PATH, true);
 
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
@@ -324,7 +323,6 @@ namespace vkEngine
 
 				vertex.color = { 1.0f, 1.0f, 1.0f };
 
-
 				if (uniqueVertices.count(vertex) == 0)
 				{
 					uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
@@ -332,7 +330,6 @@ namespace vkEngine
 				}
 
 				indices.push_back(uniqueVertices[vertex]);
-
 			}
 		}
 	}
@@ -353,7 +350,6 @@ namespace vkEngine
 		m_TextureTest = CreateShared<Texture2D>("assets/textures/viking_room.png", VK_SAMPLE_COUNT_1_BIT, true);
 		m_TextureTest2 = CreateShared<Texture2D>("assets/textures/brick_wall.jpg", VK_SAMPLE_COUNT_1_BIT, true);
 	}
-
 
 	void Engine::updateUniformBuffer(uint32_t currentFrame, Timestep deltaTime)
 	{
@@ -458,7 +454,8 @@ namespace vkEngine
 		VkPipelineMultisampleStateCreateInfo multisampling{};
 		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		multisampling.sampleShadingEnable = VK_FALSE;
-		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+		multisampling.rasterizationSamples = VulkanContext::getSwapchain()->getMSAABuffer()->getConfig().sampleCount;
+
 
 		VkPipelineDepthStencilStateCreateInfo depthStencil{};
 		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -561,13 +558,13 @@ namespace vkEngine
 	{
 		VkAttachmentDescription colorAttachment{};
 		colorAttachment.format = VulkanContext::getSwapchain()->getImagesFormat();
-		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachment.samples = VulkanContext::getSwapchain()->getMSAABuffer()->getConfig().sampleCount;
 		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; //what to do with framebuffer before rendering
 		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;//after
 		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkAttachmentReference colorAttachmentRef{};
 		colorAttachmentRef.attachment = 0;
@@ -582,16 +579,33 @@ namespace vkEngine
 		depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		depthAttachment.samples = VulkanContext::getSwapchain()->getMSAABuffer()->getConfig().sampleCount;;
+
 
 		VkAttachmentReference depthAttachmentRef{};
 		depthAttachmentRef.attachment = 1;
 		depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentDescription colorAttachmentResolve{};
+		colorAttachmentResolve.format = VulkanContext::getSwapchain()->getImagesFormat();
+		colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkAttachmentReference colorAttachmentResolveRef{};
+		colorAttachmentResolveRef.attachment = 2;
+		colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass{};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.colorAttachmentCount = 1;
 		subpass.pColorAttachments = &colorAttachmentRef;
 		subpass.pDepthStencilAttachment = &depthAttachmentRef;
+		subpass.pResolveAttachments = &colorAttachmentResolveRef;
 
 		VkSubpassDependency dependency{};
 		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -601,7 +615,7 @@ namespace vkEngine
 		dependency.srcAccessMask = 0;
 		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-		std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+		std::array<VkAttachmentDescription, 3> attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
 
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;

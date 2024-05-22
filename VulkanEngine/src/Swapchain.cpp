@@ -3,7 +3,7 @@
 #include "Swapchain.h"
 #include "VulkanContext.h"
 #include "QueueHandler.h"
-#include "window/Window.h"
+#include "Window/Window.h"
 #include <Images/Image2D.h>
 
 namespace vkEngine
@@ -20,11 +20,14 @@ namespace vkEngine
 		initSwapchain();
 		initImageViews();
 		initSemaphores();
+		initMSAAColorBuffer();
 		initDepthBuffer();
 	}
 
 	Swapchain::~Swapchain() {
 		cleanupSwapchain();
+		m_DepthBuffer.reset();
+		m_MultisampledColorBuffer.reset();
 	}
 
 	void Swapchain::initImageViews()
@@ -64,6 +67,7 @@ namespace vkEngine
 		cleanupSwapchain();
 		initSwapchain();
 		m_DepthBuffer->resize(m_SwapchainExtent.width, m_SwapchainExtent.height);
+		m_MultisampledColorBuffer->resize(m_SwapchainExtent.width, m_SwapchainExtent.height);
 		initImageViews();
 		initFramebuffers(renderpass);
 		initSemaphores();
@@ -97,14 +101,15 @@ namespace vkEngine
 		{
 			VkImageView attachments[] =
 			{
-			  m_SwapchainImageViews[i],
-			  m_DepthBuffer->getImageView()
+				m_MultisampledColorBuffer->getImageView(),
+			  m_DepthBuffer->getImageView(),
+				m_SwapchainImageViews[i]
 			};
 
 			VkFramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			framebufferInfo.renderPass = renderpass; //TODO: renderpass class?
-			framebufferInfo.attachmentCount = 2;
+			framebufferInfo.attachmentCount = 3;
 			framebufferInfo.pAttachments = &attachments[0];
 			framebufferInfo.width = m_SwapchainExtent.width;
 			framebufferInfo.height = m_SwapchainExtent.height;
@@ -139,9 +144,26 @@ namespace vkEngine
 			.format = depthFormat,
 			.memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			.usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			.aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT
+			.aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
+			.mipmapLevel = 1,
+			.sampleCount = m_PhysicalDevice->getMaxUsableSampleCount()
 		};
 		m_DepthBuffer = CreateScoped<DepthImage>(m_PhysicalDevice, m_Device, config);
+	}
+
+	void Swapchain::initMSAAColorBuffer()
+	{
+		Image2DConfig config =
+		{
+			.extent = {m_SwapchainExtent},
+			.format = m_SwapchainImageFormat,
+			.memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			.usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			.aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+			.mipmapLevel = 1,
+			.sampleCount = m_PhysicalDevice->getMaxUsableSampleCount()
+		};
+		m_MultisampledColorBuffer = CreateScoped<Image2D>(m_PhysicalDevice, m_Device, config);
 	}
 
 	VkPresentModeKHR Swapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& abailableModes)

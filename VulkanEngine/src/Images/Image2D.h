@@ -15,6 +15,7 @@ namespace vkEngine
 		VkImageUsageFlags usageFlags = 0;
 		VkImageAspectFlags aspectFlags = 0;
 		uint32_t mipmapLevel = 0;
+		VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
 	};
 
 

@@ -57,7 +57,8 @@ namespace vkEngine
 			deviceInfo.enabledLayerCount = 0;
 		}
 
-		deviceInfo.enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtensions.size());
+		
+			deviceInfo.enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtensions.size());
 		deviceInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
 
 		ENGINE_ASSERT(vkCreateDevice(m_PhysicalDevice->physicalDevice(), &deviceInfo, nullptr, &m_Device) == VK_SUCCESS, "Device creation failed");
